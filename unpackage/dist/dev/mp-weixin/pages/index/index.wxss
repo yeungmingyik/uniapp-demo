@@ -1,0 +1,65 @@
+
+.page {
+		padding: 32rpx 48rpx;
+		background-color: #FFFFFF;
+}
+.user-header {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+}
+.avatar {
+		width: 96rpx;
+		height: 96rpx;
+		border-radius: 48rpx;
+		background-color: #F0F0F0;
+}
+.user-texts {
+		margin-left: 40rpx;
+		display: flex;
+		flex-direction: column;
+}
+.greeting {
+		font-size: 28rpx; 
+		color: #8F98A3;
+		line-height: 40rpx;
+}
+.date {
+		margin-top: 2rpx;
+		font-size: 36rpx;
+		font-weight: 700;
+		color: #2E2E2E;
+		line-height: 56rpx;
+}
+.section-title {
+		margin-top: 50rpx;
+		margin-bottom: 20rpx;
+		font-size: 40rpx;
+		font-weight: 700;
+		color: #111111;
+}
+.cards {
+		display: flex;
+		flex-direction: column;
+		gap: 20rpx;
+}
+.card {
+		background-color: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 20rpx;
+		box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.06);
+		position: relative;
+		height: 200rpx;
+}
+.card-header-row { display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 26rpx; color: #333333; font-weight: 600;
+}
+.card-icon { height: 48rpx; width: 48rpx;
+}
+.card-value { position: absolute; left: 20rpx; bottom: 20rpx; display: flex; align-items: baseline;
+}
+.value-text { font-size: 65rpx; font-weight: 700; color: #111111; line-height: 1;
+}
+.unit-text { margin-left: 12rpx; font-size: 25rpx; color: #9AA1A9; line-height: 1;
+}
