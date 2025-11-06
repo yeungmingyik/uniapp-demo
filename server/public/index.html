@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>减肥健康数据中心</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <!-- AdminLTE -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="#" class="nav-link" id="navbar-current">服务器状态</a>
+      </li>
+    </ul>
+
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+          <i class="fas fa-expand-arrows-alt"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="index.html" class="brand-link">
+      <span class="brand-text font-weight-light">东莞博熵科技服务有限公司</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" id="nav-status">
+              <i class="nav-icon fas fa-heartbeat"></i>
+              <p>服务器状态</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="nav-users">
+              <i class="nav-icon fas fa-users"></i>
+              <p>用户ID管理</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" id="nav-health">
+              <i class="nav-icon fas fa-chart-line"></i>
+              <p>健康数据查询</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">减肥健康数据中心</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">首页</a></li>
+              <li class="breadcrumb-item active" id="breadcrumb-text">服务器状态</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- 服务器状态卡片 -->
+        <div class="row" id="status-section">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-server mr-2"></i>服务器运行状态
+                </h3>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" onclick="checkStatus()" title="刷新">
+                    <i class="fas fa-sync-alt"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="status-content">
+                  <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">加载中...</span>
+                    </div>
+                    <p class="mt-3">正在检查服务器状态...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 用户ID列表卡片 -->
+        <div class="row" id="users-section" style="display: none;">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-users mr-2"></i>用户列表
+                </h3>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" onclick="loadUsers()" title="刷新">
+                    <i class="fas fa-sync-alt"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="users-content">
+                  <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">加载中...</span>
+                    </div>
+                    <p class="mt-3">正在加载用户列表...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 健康数据查询卡片 -->
+        <div class="row" id="health-section" style="display: none;">
+          <div class="col-12">
+            <!-- 查询表单卡片 -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-search mr-2"></i>健康数据查询
+                </h3>
+              </div>
+              <div class="card-body">
+                <form id="health-query-form">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="query-user-id">用户ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="query-user-id" placeholder="例如: user_002" required>
+                        <small class="form-text text-muted">必填：要查询的用户ID</small>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="query-time-range">时间范围</label>
+                        <input type="text" class="form-control" id="query-time-range" placeholder="例如: -365d (过去365天)">
+                        <small class="form-text text-muted">格式: -Nd (N为天数，如 -7d 表示过去7天，留空表示全部)</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>健康数据字段</label>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="field-heart_rate" value="heart_rate" checked>
+                          <label class="form-check-label" for="field-heart_rate">心率 (heart_rate)</label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="field-temperature" value="temperature" checked>
+                          <label class="form-check-label" for="field-temperature">体温 (temperature)</label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="field-blood_oxygen" value="blood_oxygen" checked>
+                          <label class="form-check-label" for="field-blood_oxygen">血氧饱和度 (blood_oxygen)</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label>设备筛选</label>
+                        <div class="row">
+                          <div class="col-12 mb-2">
+                            <input type="text" class="form-control" id="query-device-id" placeholder="设备ID (多个用逗号分隔)">
+                          </div>
+                          <div class="col-12">
+                            <input type="text" class="form-control" id="query-device-name" placeholder="设备名称 (多个用逗号分隔)">
+                          </div>
+                        </div>
+                        <small class="form-text text-muted">可通过设备ID或设备名称筛选数据</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-search mr-2"></i>查询健康数据
+                    </button>
+                    <button type="button" class="btn btn-secondary ml-2" onclick="resetHealthForm()">
+                      <i class="fas fa-redo mr-2"></i>重置
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- 查询结果卡片 -->
+            <div class="card" id="health-result-card" style="display: none;">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-chart-line mr-2"></i>查询结果
+                </h3>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-tool" onclick="document.getElementById('health-result-card').style.display='none'" title="关闭">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="health-result-content"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="float-right d-none d-sm-block">
+      <b>Version</b> 1.0.0
+    </div>
+    <strong>Copyright &copy; 2025 东莞博熵科技服务有限公司. All Rights Reserved</strong>
+  </footer>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<script>
+// API基础URL
+const API_BASE = window.location.origin;
+
+// 检查服务器状态
+async function checkStatus() {
+  const contentEl = document.getElementById('status-content');
+  contentEl.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">加载中...</span>
+      </div>
+      <p class="mt-3">正在检查服务器状态...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/status`);
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      contentEl.innerHTML = `
+        <div class="info-box bg-success">
+          <span class="info-box-icon"><i class="fas fa-server"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">服务器状态</span>
+            <span class="info-box-number">正常</span>
+          </div>
+        </div>
+      `;
+    } else {
+      contentEl.innerHTML = `
+        <div class="info-box bg-danger">
+          <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">服务器状态</span>
+            <span class="info-box-number">异常</span>
+          </div>
+        </div>
+        <p class="mt-2 text-danger">${data.message || '服务器不可用'}</p>
+      `;
+    }
+  } catch (error) {
+    contentEl.innerHTML = `
+      <div class="info-box bg-danger">
+        <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">服务器状态</span>
+          <span class="info-box-number">异常</span>
+        </div>
+      </div>
+      <p class="mt-2 text-danger">无法连接到后端服务器：${error.message}</p>
+    `;
+  }
+}
+
+// 加载用户ID列表
+async function loadUsers() {
+  const contentEl = document.getElementById('users-content');
+  contentEl.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">加载中...</span>
+      </div>
+      <p class="mt-3">正在加载用户列表...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/users`);
+    const data = await response.json();
+
+    if (data.status === 'success' && data.user_ids && data.user_ids.length > 0) {
+      let tableRows = '';
+      data.user_ids.forEach((userId, index) => {
+        tableRows += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${userId}</td>
+          </tr>
+        `;
+      });
+
+      contentEl.innerHTML = `
+        <div class="alert alert-success alert-dismissible">
+          <h5><i class="icon fas fa-check"></i> 获取成功</h5>
+          <p class="mb-0">共找到 <strong>${data.count}</strong> 个用户ID${data.task_id ? ` (任务ID: ${data.task_id})` : ''}</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th style="width: 60px">序号</th>
+                <th>用户ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      contentEl.innerHTML = `
+        <div class="alert alert-warning alert-dismissible">
+          <h5><i class="icon fas fa-exclamation-triangle"></i> 未找到用户</h5>
+          <p class="mb-0">${data.message || '用户ID列表为空'}</p>
+        </div>
+        <div class="info-box bg-warning">
+          <span class="info-box-icon"><i class="fas fa-users"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">用户数量</span>
+            <span class="info-box-number">0</span>
+          </div>
+        </div>
+      `;
+    }
+  } catch (error) {
+    contentEl.innerHTML = `
+      <div class="alert alert-danger alert-dismissible">
+        <h5><i class="icon fas fa-ban"></i> 请求失败！</h5>
+        <p class="mb-0">无法连接到后端服务器：${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+// 导航切换
+document.getElementById('nav-status').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('status-section').style.display = 'block';
+  document.getElementById('users-section').style.display = 'none';
+  document.getElementById('breadcrumb-text').textContent = '服务器状态';
+  const navCurrent = document.getElementById('navbar-current');
+  if (navCurrent) navCurrent.textContent = '服务器状态';
+  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+  this.classList.add('active');
+  checkStatus();
+});
+
+document.getElementById('nav-users').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('status-section').style.display = 'none';
+  document.getElementById('users-section').style.display = 'block';
+  document.getElementById('health-section').style.display = 'none';
+  document.getElementById('breadcrumb-text').textContent = '用户列表';
+  const navCurrent2 = document.getElementById('navbar-current');
+  if (navCurrent2) navCurrent2.textContent = '用户列表';
+  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+  this.classList.add('active');
+  loadUsers();
+});
+
+document.getElementById('nav-health').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('status-section').style.display = 'none';
+  document.getElementById('users-section').style.display = 'none';
+  document.getElementById('health-section').style.display = 'block';
+  document.getElementById('breadcrumb-text').textContent = '健康数据查询';
+  const navCurrent3 = document.getElementById('navbar-current');
+  if (navCurrent3) navCurrent3.textContent = '健康数据查询';
+  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+  this.classList.add('active');
+});
+
+// 健康数据查询相关函数
+let healthCharts = {}; // 存储图表实例
+
+// 重置健康数据查询表单
+function resetHealthForm() {
+  document.getElementById('health-query-form').reset();
+  document.getElementById('health-result-card').style.display = 'none';
+  // 销毁所有图表
+  Object.values(healthCharts).forEach(chart => {
+    if (chart) chart.destroy();
+  });
+  healthCharts = {};
+}
+
+// 查询健康数据
+async function queryHealthData() {
+  const userId = document.getElementById('query-user-id').value.trim();
+  const timeRange = document.getElementById('query-time-range').value.trim();
+  
+  // 获取选中的字段
+  const selectedFields = [];
+  if (document.getElementById('field-heart_rate').checked) selectedFields.push('heart_rate');
+  if (document.getElementById('field-temperature').checked) selectedFields.push('temperature');
+  if (document.getElementById('field-blood_oxygen').checked) selectedFields.push('blood_oxygen');
+  
+  const deviceId = document.getElementById('query-device-id').value.trim();
+  const deviceName = document.getElementById('query-device-name').value.trim();
+
+  if (!userId) {
+    alert('请输入用户ID');
+    return;
+  }
+
+  if (selectedFields.length === 0) {
+    alert('请至少选择一种健康数据字段');
+    return;
+  }
+
+  const resultCard = document.getElementById('health-result-card');
+  const resultContent = document.getElementById('health-result-content');
+  
+  resultCard.style.display = 'block';
+  resultContent.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">加载中...</span>
+      </div>
+      <p class="mt-3">正在查询健康数据（${selectedFields.length}个字段）...</p>
+    </div>
+  `;
+
+  // 销毁旧图表
+  Object.values(healthCharts).forEach(chart => {
+    if (chart) chart.destroy();
+  });
+  healthCharts = {};
+
+  // 为每个字段分别发起请求（因为API可能一次只返回一个字段的数据）
+  const allData = [];
+  let completedRequests = 0;
+  let hasError = false;
+
+  for (const field of selectedFields) {
+    try {
+      // 构建请求体
+      const requestBody = { user_id: userId };
+      if (timeRange) requestBody.time_range = timeRange;
+      requestBody.fields = field; // 每次只请求一个字段
+      
+      const tags = {};
+      if (deviceId) tags.device_id = deviceId;
+      if (deviceName) tags.device_name = deviceName;
+      if (Object.keys(tags).length > 0) requestBody.tags = tags;
+
+      console.log(`发送请求 [${field}]:`, requestBody);
+
+      const response = await fetch(`${API_BASE}/api/health/user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      const data = await response.json();
+      
+      console.log(`API 返回 [${field}]:`, {
+        status: data.status,
+        dataCount: Array.isArray(data.user_data) ? data.user_data.length : (data.user_data ? 1 : 0)
+      });
+
+      if (data.status === 'success' && data.user_data) {
+        // 将返回的数据合并到 allData
+        if (Array.isArray(data.user_data)) {
+          allData.push(...data.user_data);
+        } else if (data.user_data && typeof data.user_data === 'object') {
+          // 如果是对象，检查是否已经是数组格式
+          if (data.user_data.filed || data.user_data.field || data.user_data.value !== undefined) {
+            allData.push(data.user_data);
+          } else {
+            // 如果是按字段分组的对象，展开它
+            Object.keys(data.user_data).forEach(key => {
+              if (Array.isArray(data.user_data[key])) {
+                data.user_data[key].forEach(item => {
+                  allData.push({ ...item, field: key, filed: key });
+                });
+              } else if (data.user_data[key] && typeof data.user_data[key] === 'object') {
+                allData.push({ ...data.user_data[key], field: key, filed: key });
+              }
+            });
+          }
+        }
+      }
+      
+      completedRequests++;
+      
+      // 更新进度
+      resultContent.innerHTML = `
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">加载中...</span>
+          </div>
+          <p class="mt-3">正在查询健康数据... (${completedRequests}/${selectedFields.length})</p>
+        </div>
+      `;
+      
+    } catch (error) {
+      console.error(`查询字段 ${field} 失败:`, error);
+      hasError = true;
+      completedRequests++;
+    }
+  }
+
+  // 所有请求完成后，显示结果
+  if (hasError && allData.length === 0) {
+    resultContent.innerHTML = `
+      <div class="alert alert-danger">
+        <h5><i class="icon fas fa-ban"></i> 查询失败</h5>
+        <p class="mb-0">部分字段查询失败，请重试</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (allData.length === 0) {
+    resultContent.innerHTML = `
+      <div class="alert alert-warning">
+        <h5><i class="icon fas fa-exclamation-triangle"></i> 无数据</h5>
+        <p class="mb-0">该用户在当前条件下没有健康数据</p>
+      </div>
+    `;
+    return;
+  }
+
+  // 合并所有数据并显示
+  const mergedData = {
+    status: 'success',
+    user_data: allData,
+    task_id: null
+  };
+
+  console.log('合并后的所有数据:', {
+    totalCount: allData.length,
+    fields: [...new Set(allData.map(item => item.field || item.filed))]
+  });
+
+  displayHealthData(mergedData, userId);
+}
+
+// 展示健康数据
+function displayHealthData(data, userId) {
+  const resultContent = document.getElementById('health-result-content');
+  const userData = data.user_data;
+  
+  console.log('原始 user_data:', userData);
+  console.log('user_data 类型:', typeof userData, Array.isArray(userData));
+  
+  // 判断数据结构：可能是数组或对象
+  let dataArray = [];
+  if (Array.isArray(userData)) {
+    // 如果是数组，直接使用
+    dataArray = userData;
+    console.log('数据是数组格式，共', dataArray.length, '条记录');
+  } else if (userData && typeof userData === 'object') {
+    // 检查是否是单个对象还是包含多个字段的对象
+    // 如果对象有 filed 或 field 属性，说明是单个记录，转为数组
+    if (userData.filed || userData.field || userData.value !== undefined) {
+      dataArray = [userData];
+      console.log('数据是单个对象格式');
+    } else {
+      // 如果是对象但没有 filed/field，可能是按字段分组的对象，需要展开
+      // 例如: { heart_rate: [...], temperature: [...] }
+      console.log('数据是对象格式，正在展开字段...');
+      Object.keys(userData).forEach(key => {
+        console.log('处理字段:', key, '类型:', typeof userData[key], Array.isArray(userData[key]));
+        if (Array.isArray(userData[key])) {
+          console.log('字段', key, '是数组，共', userData[key].length, '条');
+          userData[key].forEach(item => {
+            dataArray.push({ ...item, field: key, filed: key });
+          });
+        } else if (userData[key] && typeof userData[key] === 'object') {
+          console.log('字段', key, '是单个对象');
+          dataArray.push({ ...userData[key], field: key, filed: key });
+        } else if (userData[key] !== null && userData[key] !== undefined) {
+          // 可能是简单的值，需要包装成对象
+          console.log('字段', key, '是简单值:', userData[key]);
+          dataArray.push({ value: userData[key], field: key, filed: key });
+        }
+      });
+    }
+  }
+
+  console.log('处理后的 dataArray:', dataArray);
+  console.log('dataArray 长度:', dataArray.length);
+
+  if (dataArray.length === 0) {
+    resultContent.innerHTML = `
+      <div class="alert alert-warning">
+        <h5><i class="icon fas fa-exclamation-triangle"></i> 无数据</h5>
+        <p class="mb-0">该用户在当前条件下没有健康数据</p>
+      </div>
+    `;
+    return;
+  }
+
+  // 按字段分组数据
+  const fieldData = {
+    heart_rate: [],
+    temperature: [],
+    blood_oxygen: []
+  };
+  
+  const deviceInfo = new Set(); // 存储设备信息
+  
+  // 数据排序：如果有时间戳，按时间排序
+  if (dataArray.length > 0 && (dataArray[0].timestamp || dataArray[0].datetime || dataArray[0].record_time || dataArray[0].time)) {
+    dataArray.sort((a, b) => {
+      const timeA = a.timestamp || a.datetime || a.record_time || a.time || '';
+      const timeB = b.timestamp || b.datetime || b.record_time || b.time || '';
+      return new Date(timeA) - new Date(timeB);
+    });
+  }
+
+  dataArray.forEach((item, index) => {
+    const timestamp = item.timestamp || item.datetime || item.record_time || item.time || null;
+    const timeStr = timestamp ? new Date(timestamp).toLocaleString('zh-CN') : null;
+    // 注意：API返回可能是 filed（拼写错误）或 field
+    const field = (item.filed || item.field || '').toLowerCase().trim();
+    
+    console.log(`处理第 ${index + 1} 条数据:`, {
+      field: field,
+      value: item.value,
+      filed: item.filed,
+      field_prop: item.field,
+      fullItem: item
+    });
+    
+    // 更灵活的字段匹配逻辑
+    let matchedField = null;
+    
+    // 精确匹配
+    if (field === 'heart_rate' || field === 'heartrate') {
+      matchedField = 'heart_rate';
+    } else if (field === 'temperature' || field === 'temp') {
+      matchedField = 'temperature';
+    } else if (field === 'blood_oxygen' || field === 'bloodoxygen' || field === 'spo2') {
+      matchedField = 'blood_oxygen';
+    }
+    
+    // 如果精确匹配失败，尝试模糊匹配
+    if (!matchedField) {
+      if (field.includes('heart') || field.includes('rate') || field.includes('心率')) {
+        matchedField = 'heart_rate';
+      } else if (field.includes('temp') || field.includes('体温')) {
+        matchedField = 'temperature';
+      } else if (field.includes('oxygen') || field.includes('blood') || field.includes('血氧')) {
+        matchedField = 'blood_oxygen';
+      }
+    }
+    
+    if (matchedField) {
+      console.log(`✓ 字段匹配成功: ${field} -> ${matchedField}`);
+      fieldData[matchedField].push({ 
+        value: item.value, 
+        device_id: item.device_id, 
+        device_name: item.device_name,
+        timestamp: timestamp,
+        timeStr: timeStr
+      });
+    } else {
+      console.warn('✗ 未识别的字段:', {
+        field: field,
+        filed_prop: item.filed,
+        field_prop: item.field,
+        fullItem: item,
+        '提示': '请检查API返回的字段名是否正确'
+      });
+    }
+    
+    if (item.device_id || item.device_name) {
+      deviceInfo.add(`${item.device_id || '未知'} (${item.device_name || '未知'})`);
+    }
+  });
+
+  // 调试信息
+  console.log('字段分组结果:', {
+    totalItems: dataArray.length,
+    heart_rate: fieldData.heart_rate.length,
+    temperature: fieldData.temperature.length,
+    blood_oxygen: fieldData.blood_oxygen.length,
+    fieldData: fieldData
+  });
+
+  // 构建HTML
+  let html = `
+    <div class="alert alert-info">
+      <h5><i class="icon fas fa-info-circle"></i> 用户信息</h5>
+      <p class="mb-1"><strong>用户ID:</strong> ${userId}</p>
+      <p class="mb-1"><strong>设备信息:</strong> ${Array.from(deviceInfo).join(', ') || '未指定设备'}</p>
+      ${data.task_id ? `<p class="mb-0"><strong>任务ID:</strong> ${data.task_id}</p>` : ''}
+    </div>
+  `;
+
+  // 为每个字段创建图表和表格
+  const fieldNames = {
+    heart_rate: { name: '心率', unit: 'bpm', color: 'rgb(255, 99, 132)' },
+    temperature: { name: '体温', unit: '℃', color: 'rgb(54, 162, 235)' },
+    blood_oxygen: { name: '血氧饱和度', unit: '%', color: 'rgb(75, 192, 192)' }
+  };
+
+  let cardCount = 0;
+  Object.keys(fieldNames).forEach(field => {
+    const fieldInfo = fieldNames[field];
+    const fieldValues = fieldData[field];
+    
+    console.log(`准备生成 ${field} 的卡片:`, {
+      name: fieldInfo.name,
+      dataCount: fieldValues.length,
+      willCreate: fieldValues.length > 0
+    });
+    
+    if (fieldValues.length > 0) {
+      cardCount++;
+      console.log(`生成第 ${cardCount} 个卡片: ${fieldInfo.name}`);
+      const avg = (fieldValues.reduce((sum, d) => sum + parseFloat(d.value), 0) / fieldValues.length).toFixed(2);
+      const max = Math.max(...fieldValues.map(d => parseFloat(d.value))).toFixed(2);
+      const min = Math.min(...fieldValues.map(d => parseFloat(d.value))).toFixed(2);
+      
+      html += `
+        <div class="card mb-3">
+          <div class="card-header">
+            <h4 class="card-title">${fieldInfo.name}</h4>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <canvas id="chart-${field}" height="100"></canvas>
+              </div>
+              <div class="col-md-4">
+                <div class="info-box bg-info">
+                  <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">数据点数</span>
+                    <span class="info-box-number">${fieldValues.length}</span>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <p><strong>平均值:</strong> ${avg} ${fieldInfo.unit}</p>
+                  <p><strong>最大值:</strong> ${max} ${fieldInfo.unit}</p>
+                  <p><strong>最小值:</strong> ${min} ${fieldInfo.unit}</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <h6>详细数据（按设备区分）</h6>
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      ${fieldValues[0] && fieldValues[0].timeStr ? '<th>时间</th>' : ''}
+                      <th>数值 (${fieldInfo.unit})</th>
+                      <th>设备ID</th>
+                      <th>设备名称</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+      `;
+      
+      fieldValues.forEach((item, index) => {
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            ${item.timeStr ? `<td>${item.timeStr}</td>` : ''}
+            <td>${parseFloat(item.value).toFixed(2)}</td>
+            <td>${item.device_id || '-'}</td>
+            <td>${item.device_name || '-'}</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  console.log(`HTML生成完成，共生成 ${cardCount} 个卡片`);
+
+  if (Object.values(fieldData).every(arr => arr.length === 0)) {
+    html += `
+      <div class="alert alert-warning">
+        <h5><i class="icon fas fa-exclamation-triangle"></i> 无健康数据</h5>
+        <p class="mb-0">该用户在当前条件下没有可用的健康数据</p>
+      </div>
+    `;
+  }
+
+  resultContent.innerHTML = html;
+
+  // 渲染图表
+  console.log('开始渲染图表...');
+  Object.keys(fieldNames).forEach(field => {
+    const fieldInfo = fieldNames[field];
+    const fieldValues = fieldData[field];
+    
+    console.log(`渲染字段 ${field}:`, {
+      name: fieldInfo.name,
+      dataCount: fieldValues.length,
+      hasData: fieldValues.length > 0
+    });
+    
+    if (fieldValues.length > 0) {
+      const canvasId = `chart-${field}`;
+      const canvas = document.getElementById(canvasId);
+      console.log(`查找 canvas: ${canvasId}`, canvas ? '找到' : '未找到');
+      
+      if (canvas) {
+        // 如果图表已存在，先销毁
+        if (healthCharts[field]) {
+          console.log(`销毁已存在的图表: ${field}`);
+          healthCharts[field].destroy();
+        }
+        
+        const ctx = canvas.getContext('2d');
+        // 生成X轴标签：如果有时间戳，显示时间；否则显示序号
+        const labels = fieldValues[0] && fieldValues[0].timestamp 
+          ? fieldValues.map(d => {
+              const date = new Date(d.timestamp);
+              return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+            })
+          : fieldValues.map((_, i) => `数据点 ${i + 1}`);
+        
+        console.log(`创建图表: ${field}`, {
+          labelsCount: labels.length,
+          dataCount: fieldValues.length
+        });
+        
+        try {
+          healthCharts[field] = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: fieldInfo.name,
+                data: fieldValues.map(d => parseFloat(d.value)),
+                borderColor: fieldInfo.color,
+                backgroundColor: fieldInfo.color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
+                tension: 0.1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  display: true
+                },
+                tooltip: {
+                  callbacks: {
+                    title: function(context) {
+                      const index = context[0].dataIndex;
+                      const item = fieldValues[index];
+                      if (item.timeStr) {
+                        return item.timeStr;
+                      }
+                      return labels[index];
+                    },
+                    afterLabel: function(context) {
+                      const index = context.dataIndex;
+                      const item = fieldValues[index];
+                      return `设备: ${item.device_id || '-'} (${item.device_name || '-'})`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  title: {
+                    display: true,
+                    text: fieldInfo.unit
+                  }
+                }
+              }
+            }
+          });
+          console.log(`图表 ${field} 创建成功`);
+        } catch (error) {
+          console.error(`创建图表 ${field} 失败:`, error);
+        }
+      } else {
+        console.error(`找不到 canvas 元素: ${canvasId}`);
+      }
+    } else {
+      console.log(`字段 ${field} 没有数据，跳过渲染`);
+    }
+  });
+  
+  console.log('图表渲染完成，已创建的图表:', Object.keys(healthCharts));
+}
+
+// 表单提交事件
+document.getElementById('health-query-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  queryHealthData();
+});
+
+// 页面加载时检查服务器状态
+document.addEventListener('DOMContentLoaded', function() {
+  checkStatus();
+  
+  // 自动刷新服务器状态（每30秒）
+  setInterval(checkStatus, 30000);
+});
+</script>
+</body>
+</html>
+
