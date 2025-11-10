@@ -774,6 +774,19 @@ function displayHealthData(data, userId) {
       const avg = (fieldValues.reduce((sum, d) => sum + parseFloat(d.value), 0) / fieldValues.length).toFixed(2);
       const max = Math.max(...fieldValues.map(d => parseFloat(d.value))).toFixed(2);
       const min = Math.min(...fieldValues.map(d => parseFloat(d.value))).toFixed(2);
+
+      const getTimeNumber = (item) => {
+        const raw =
+          item.timestamp ||
+          item.time ||
+          item.datetime ||
+          item.record_time ||
+          item.timeStr ||
+          '';
+        const timeValue = new Date(raw).getTime();
+        return Number.isNaN(timeValue) ? 0 : timeValue;
+      };
+      const displayValues = [...fieldValues].sort((a, b) => getTimeNumber(b) - getTimeNumber(a));
       
       html += `
         <div class="card mb-3">
@@ -816,7 +829,7 @@ function displayHealthData(data, userId) {
                   <tbody>
       `;
       
-      fieldValues.forEach((item, index) => {
+      displayValues.forEach((item, index) => {
         html += `
           <tr>
             <td>${index + 1}</td>

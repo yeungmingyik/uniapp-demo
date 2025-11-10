@@ -1,5 +1,5 @@
 // API基础地址 - 请根据实际情况修改
-const API_BASE = 'http://10.188.121.155:3000';
+const API_BASE = 'http://192.168.80.227:3000';
 
 // 获取用户列表
 export function getUserList() {
@@ -56,35 +56,69 @@ export function getUserHealthData(userId, field, timeRange = '', tags = {}) {
 	});
 }
 
+// 获取设备选项
+export function getDeviceOptions() {
+	return new Promise((resolve) => {
+		uni.request({
+			url: `${API_BASE}/api/devices`,
+			method: 'GET',
+			timeout: 10000,
+			success: (res) => {
+				if (res.statusCode === 200 && res.data.status === 'success') {
+					resolve({
+						deviceIds: res.data.device_ids || [],
+						deviceNames: res.data.device_names || []
+					});
+				} else {
+					resolve({
+						deviceIds: [],
+						deviceNames: []
+					});
+				}
+			},
+			fail: (err) => {
+				console.error('获取设备列表失败:', err);
+				resolve({
+					deviceIds: [],
+					deviceNames: []
+				});
+			}
+		});
+	});
+}
+
 // 获取用户多个健康数据字段（分别请求）
 export async function getUserHealthDataMultiple(userId, fields = ['heart_rate', 'temperature', 'blood_oxygen'], timeRange = '', tags = {}) {
 	const results = {};
-	
-	// 为每个字段分别发起请求
-	for (const field of fields) {
-		try {
-			const data = await getUserHealthData(userId, field, timeRange, tags);
-			if (Array.isArray(data) && data.length > 0) {
-				// 找到最新的数据（按时间排序）
-				const sortedData = data.sort((a, b) => {
-					const timeA = a.time || a.timestamp || a.datetime || '';
-					const timeB = b.time || b.timestamp || b.datetime || '';
-					return new Date(timeB) - new Date(timeA);
-				});
-				results[field] = {
-					value: sortedData[0].value,
-					time: sortedData[0].time || sortedData[0].timestamp || sortedData[0].datetime,
-					allData: data // 保留所有数据用于详情页
-				};
-			} else {
-				results[field] = null;
-			}
-		} catch (error) {
-			console.error(`获取${field}数据失败:`, error);
+	const promises = fields.map((field) =>
+		getUserHealthData(userId, field, timeRange, tags)
+			.then((data) => ({ field, data }))
+			.catch((error) => {
+				console.error(`获取${field}数据失败:`, error);
+				return { field, data: [] };
+			})
+	);
+
+	const responses = await Promise.all(promises);
+
+	responses.forEach(({ field, data }) => {
+		if (Array.isArray(data) && data.length > 0) {
+			const sortedData = [...data].sort((a, b) => {
+				const timeA = a.time || a.timestamp || a.datetime || '';
+				const timeB = b.time || b.timestamp || b.datetime || '';
+				return new Date(timeB) - new Date(timeA);
+			});
+
+			results[field] = {
+				value: sortedData[0].value,
+				time: sortedData[0].time || sortedData[0].timestamp || sortedData[0].datetime,
+				allData: data
+			};
+		} else {
 			results[field] = null;
 		}
-	}
-	
+	});
+
 	return results;
 }
 

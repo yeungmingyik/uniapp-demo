@@ -5117,7 +5117,40 @@ function patchStopImmediatePropagation(e2, value) {
     return value;
   }
 }
+function vFor(source, renderItem) {
+  let ret;
+  if (isArray(source) || isString(source)) {
+    ret = new Array(source.length);
+    for (let i2 = 0, l2 = source.length; i2 < l2; i2++) {
+      ret[i2] = renderItem(source[i2], i2, i2);
+    }
+  } else if (typeof source === "number") {
+    if (!Number.isInteger(source)) {
+      warn(`The v-for range expect an integer value but got ${source}.`);
+      return [];
+    }
+    ret = new Array(source);
+    for (let i2 = 0; i2 < source; i2++) {
+      ret[i2] = renderItem(i2 + 1, i2, i2);
+    }
+  } else if (isObject(source)) {
+    if (source[Symbol.iterator]) {
+      ret = Array.from(source, (item, i2) => renderItem(item, i2, i2));
+    } else {
+      const keys = Object.keys(source);
+      ret = new Array(keys.length);
+      for (let i2 = 0, l2 = keys.length; i2 < l2; i2++) {
+        const key = keys[i2];
+        ret[i2] = renderItem(source[key], key, i2);
+      }
+    }
+  } else {
+    ret = [];
+  }
+  return ret;
+}
 const o$1 = (value, key) => vOn(value, key);
+const f$1 = (source, renderItem) => vFor(source, renderItem);
 const e$1 = (target, ...sources) => extend(target, ...sources);
 const t$1 = (val) => toDisplayString(val);
 const p$1 = (props) => renderProps(props);
@@ -6940,9 +6973,9 @@ function isConsoleWritable() {
   return isWritable;
 }
 function initRuntimeSocketService() {
-  const hosts = "172.18.0.1,10.188.121.155,127.0.0.1";
+  const hosts = "172.18.0.1,192.168.80.227,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_AVhwm3";
+  const id = "mp-weixin_-dG-Vt";
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -10761,6 +10794,7 @@ var tr = er;
 exports._export_sfc = _export_sfc;
 exports.createSSRApp = createSSRApp;
 exports.e = e$1;
+exports.f = f$1;
 exports.index = index;
 exports.o = o$1;
 exports.p = p$1;

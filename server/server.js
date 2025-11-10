@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 // 阿里云服务器配置
 const ALIYUN_SERVER = 'http://8.138.250.160:6688';
 const REQUEST_TIMEOUT = 10000; // 10秒超时
+const DEVICE_CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存设备列表
 
 // 中间件
 app.use(cors());
@@ -167,12 +168,85 @@ app.post('/api/health/user', async (req, res) => {
   }
 });
 
+// 设备列表缓存
+let deviceCache = {
+  data: null,
+  timestamp: 0
+};
+
+// API路由：获取设备列表
+app.get('/api/devices', async (req, res) => {
+  const now = Date.now();
+  if (deviceCache.data && now - deviceCache.timestamp < DEVICE_CACHE_TTL) {
+    return res.json(deviceCache.data);
+  }
+
+  try {
+    const response = await axios.get(`${ALIYUN_SERVER}/api/health/devices`, {
+      timeout: REQUEST_TIMEOUT,
+      validateStatus: () => true
+    });
+
+    if (response.status === 200 && response.data) {
+      const deviceIds =
+        response.data.device_ids ||
+        response.data.deviceIds ||
+        [];
+      const deviceNames =
+        response.data.device_names ||
+        response.data.deviceNames ||
+        [];
+
+      const payload = {
+        status: 'success',
+        message: response.data.message || '',
+        device_ids: deviceIds,
+        device_names: deviceNames
+      };
+
+      deviceCache = {
+        data: payload,
+        timestamp: now
+      };
+
+      res.json(payload);
+    } else {
+      res.json({
+        status: 'error',
+        message: '获取设备列表失败',
+        device_ids: [],
+        device_names: [],
+        upstream: response.data || null
+      });
+    }
+  } catch (error) {
+    let message = '服务器不可用';
+    if (error.code === 'ECONNABORTED') {
+      message = '请求超时';
+    } else if (error.code === 'ECONNREFUSED') {
+      message = '连接被拒绝';
+    } else if (error.code === 'ENOTFOUND') {
+      message = '无法解析服务器地址';
+    }
+
+    res.json({
+      status: 'error',
+      message,
+      device_ids: [],
+      device_names: [],
+      error: error.message
+    });
+  }
+});
+
 // 启动服务器
 app.listen(PORT, () => {
   const now = new Date();
   const ts = now.toISOString().replace('T', ' ').substring(0, 19);
   const env = process.env.NODE_ENV || 'development';
   console.log(`[${ts}] (${env}) Admin Backend started on http://localhost:${PORT}`);
-  console.log(`[${ts}] (${env}) Routes: GET /api/status, GET /api/users, POST /api/health/user`);
+  console.log(
+    `[${ts}] (${env}) Routes: GET /api/status, GET /api/users, POST /api/health/user, GET /api/devices`
+  );
 });
 
