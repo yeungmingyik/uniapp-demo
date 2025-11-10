@@ -148,11 +148,3 @@ const API_BASE = 'http://192.168.x.x:3000';
   项目默认在本地记录解绑设备（`blockedDevices`），不会影响云端数据。如需真正解绑云端设备，请在 `unbindDevice` 中对接实际删除接口。
 - **小程序时间提示固定为“请绑定设备”**
   当未选中设备或未设置用户时，卡片内的时间文本会提示“请绑定设备/请设置用户”；绑定后自动恢复实时更新时间差。
-
-## 贡献
-欢迎提交 PR 或 Issue 改进项目。建议遵循以下规范：
-- Commit：`feat: ...` / `fix: ...` / `docs: ...` 等
-- 分支：`feat/<feature-name>`、`fix/<issue-id>`
-
-## 许可证
-本项目示例代码以 MIT 许可发布。第三方组件（AdminLTE、uCharts/qiun-data-charts）遵循各自的开源协议。
