@@ -96,6 +96,21 @@ const _sfc_main = {
         this.loading = false;
       }
     },
+    formatNumber(num) {
+      if (num === null || num === void 0) {
+        return "--";
+      }
+      const numValue = parseFloat(num);
+      if (Number.isNaN(numValue)) {
+        return "--";
+      }
+      const fixed = numValue.toFixed(2);
+      const parsed = parseFloat(fixed);
+      if (parsed % 1 === 0) {
+        return parsed.toString();
+      }
+      return parsed.toString();
+    },
     updateChart() {
       if (this.dataList.length === 0)
         return;
@@ -139,11 +154,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: $data.dataList.length > 0
   }, $data.dataList.length > 0 ? {
     e: common_vendor.t($data.dataList.length),
-    f: common_vendor.t($options.averageValue.toFixed(2)),
+    f: common_vendor.t($options.formatNumber($options.averageValue)),
     g: common_vendor.t($data.unit),
-    h: common_vendor.t($options.maxValue.toFixed(2)),
+    h: common_vendor.t($options.formatNumber($options.maxValue)),
     i: common_vendor.t($data.unit),
-    j: common_vendor.t($options.minValue.toFixed(2)),
+    j: common_vendor.t($options.formatNumber($options.minValue)),
     k: common_vendor.t($data.unit)
   } : {}, {
     l: $data.loading

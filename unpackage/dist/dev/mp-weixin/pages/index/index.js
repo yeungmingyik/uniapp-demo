@@ -120,15 +120,14 @@ const _sfc_main = {
             label: userId,
             value: userId
           }));
-          const defaultIndex = this.userList.findIndex((u) => u.value === "user_0" || u.value === "user_id_0");
-          this.userIndex = defaultIndex >= 0 ? defaultIndex : 0;
+          this.userIndex = 0;
           this.currentUser = this.userList[this.userIndex].value;
           if (autoLoad) {
             this.loadHealthData();
           }
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:261", "加载用户列表失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:260", "加载用户列表失败:", error);
         common_vendor.index.showToast({
           title: "加载用户列表失败",
           icon: "none"
@@ -188,7 +187,7 @@ const _sfc_main = {
         this.remoteDevices = remote;
         this.devices = this.mergeDeviceLists();
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:321", "加载设备列表失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:320", "加载设备列表失败:", error);
         common_vendor.index.showToast({
           title: "加载设备列表失败",
           icon: "none"
@@ -333,12 +332,12 @@ const _sfc_main = {
         const results = await utils_api.getUserHealthDataMultiple(
           this.currentUser,
           ["heart_rate", "temperature", "blood_oxygen"],
-          "-1d",
+          "-365d",
           tags
         );
         this.applyHealthResults(results);
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:465", "加载健康数据失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:464", "加载健康数据失败:", error);
         common_vendor.index.showToast({ title: "加载数据失败", icon: "none" });
         this.setEmptyHealthData();
         this.temperatureTimeText = "数据加载失败";
@@ -396,6 +395,21 @@ const _sfc_main = {
       this.heartRateTimeText = message;
       this.spo2TimeText = message;
     },
+    formatNumber(num) {
+      if (num === null || num === void 0) {
+        return "--";
+      }
+      const numValue = parseFloat(num);
+      if (Number.isNaN(numValue)) {
+        return "--";
+      }
+      const fixed = numValue.toFixed(2);
+      const parsed = parseFloat(fixed);
+      if (parsed % 1 === 0) {
+        return parsed.toString();
+      }
+      return parsed.toString();
+    },
     getTimeAgo(timeStr) {
       if (!timeStr)
         return "暂无数据";
@@ -413,11 +427,11 @@ const _sfc_main = {
           return `${diffMinutes}分钟前`;
         if (diffHours < 24)
           return `${diffHours}小时前`;
-        if (diffDays < 7)
+        if (diffDays < 365)
           return `${diffDays}天前`;
         return dataTime.toLocaleDateString("zh-CN");
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:548", "时间计算错误:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:562", "时间计算错误:", error);
         return "时间错误";
       }
     },
@@ -477,19 +491,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     k: $data.activeTab === "health"
   }, $data.activeTab === "health" ? common_vendor.e({
     l: common_assets._imports_1,
-    m: common_vendor.t($data.temperatureValue !== null ? $data.temperatureValue.toFixed(1) : "--"),
+    m: common_vendor.t($options.formatNumber($data.temperatureValue)),
     n: $data.temperatureValue !== null
   }, $data.temperatureValue !== null ? {} : {}, {
     o: common_vendor.t($data.temperatureTimeText),
     p: common_vendor.o(($event) => $options.goToDetail("temperature")),
     q: common_assets._imports_2,
-    r: common_vendor.t($data.heartRateValue !== null ? $data.heartRateValue : "--"),
+    r: common_vendor.t($options.formatNumber($data.heartRateValue)),
     s: $data.heartRateValue !== null
   }, $data.heartRateValue !== null ? {} : {}, {
     t: common_vendor.t($data.heartRateTimeText),
     v: common_vendor.o(($event) => $options.goToDetail("heart_rate")),
     w: common_assets._imports_3,
-    x: common_vendor.t($data.spo2Value !== null ? $data.spo2Value : "--"),
+    x: common_vendor.t($options.formatNumber($data.spo2Value)),
     y: $data.spo2Value !== null
   }, $data.spo2Value !== null ? {} : {}, {
     z: common_vendor.t($data.spo2TimeText),

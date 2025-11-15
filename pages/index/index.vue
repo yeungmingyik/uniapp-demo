@@ -28,7 +28,7 @@
 						</view>
 						<view class="card-value">
 							<text class="value-text">
-								{{ temperatureValue !== null ? temperatureValue.toFixed(1) : '--' }}
+								{{ formatNumber(temperatureValue) }}
 							</text>
 							<text class="unit-text" v-if="temperatureValue !== null">℃</text>
 						</view>
@@ -41,7 +41,7 @@
 							<image class="card-icon" src="/static/heart.png" mode="heightFix"></image>
 						</view>
 						<view class="card-value">
-							<text class="value-text">{{ heartRateValue !== null ? heartRateValue : '--' }}</text>
+							<text class="value-text">{{ formatNumber(heartRateValue) }}</text>
 							<text class="unit-text" v-if="heartRateValue !== null">bpm</text>
 						</view>
 						<view class="card-time">{{ heartRateTimeText }}</view>
@@ -53,7 +53,7 @@
 							<image class="card-icon" src="/static/spo2.png" mode="heightFix"></image>
 						</view>
 						<view class="card-value">
-							<text class="value-text">{{ spo2Value !== null ? spo2Value : '--' }}</text>
+							<text class="value-text">{{ formatNumber(spo2Value) }}</text>
 							<text class="unit-text" v-if="spo2Value !== null">%</text>
 						</view>
 						<view class="card-time">{{ spo2TimeText }}</view>
@@ -250,8 +250,7 @@
 							label: userId,
 							value: userId
 						}))
-						const defaultIndex = this.userList.findIndex(u => u.value === 'user_0' || u.value === 'user_id_0')
-						this.userIndex = defaultIndex >= 0 ? defaultIndex : 0
+						this.userIndex = 0
 						this.currentUser = this.userList[this.userIndex].value
 						if (autoLoad) {
 							this.loadHealthData()
@@ -457,7 +456,7 @@
 					const results = await getUserHealthDataMultiple(
 						this.currentUser,
 						['heart_rate', 'temperature', 'blood_oxygen'],
-						'-1d',
+						'-365d',
 						tags
 					)
 					this.applyHealthResults(results)
@@ -529,6 +528,21 @@
 				this.heartRateTimeText = message
 				this.spo2TimeText = message
 			},
+			formatNumber(num) {
+				if (num === null || num === undefined) {
+					return '--'
+				}
+				const numValue = parseFloat(num)
+				if (Number.isNaN(numValue)) {
+					return '--'
+				}
+				const fixed = numValue.toFixed(2)
+				const parsed = parseFloat(fixed)
+				if (parsed % 1 === 0) {
+					return parsed.toString()
+				}
+				return parsed.toString()
+			},
 			getTimeAgo(timeStr) {
 				if (!timeStr) return '暂无数据'
 				try {
@@ -542,7 +556,7 @@
 					if (diffSeconds < 60) return '刚刚'
 					if (diffMinutes < 60) return `${diffMinutes}分钟前`
 					if (diffHours < 24) return `${diffHours}小时前`
-					if (diffDays < 7) return `${diffDays}天前`
+					if (diffDays < 365) return `${diffDays}天前`
 					return dataTime.toLocaleDateString('zh-CN')
 				} catch (error) {
 					console.error('时间计算错误:', error)

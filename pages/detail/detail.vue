@@ -21,15 +21,15 @@
 			</view>
 			<view class="stat-item">
 				<text class="stat-label">平均值</text>
-				<text class="stat-value">{{ averageValue.toFixed(2) }} {{ unit }}</text>
+				<text class="stat-value">{{ formatNumber(averageValue) }} {{ unit }}</text>
 			</view>
 			<view class="stat-item">
 				<text class="stat-label">最大值</text>
-				<text class="stat-value">{{ maxValue.toFixed(2) }} {{ unit }}</text>
+				<text class="stat-value">{{ formatNumber(maxValue) }} {{ unit }}</text>
 			</view>
 			<view class="stat-item">
 				<text class="stat-label">最小值</text>
-				<text class="stat-value">{{ minValue.toFixed(2) }} {{ unit }}</text>
+				<text class="stat-value">{{ formatNumber(minValue) }} {{ unit }}</text>
 			</view>
 		</view>
 		
@@ -142,6 +142,21 @@
 				} finally {
 					this.loading = false
 				}
+			},
+			formatNumber(num) {
+				if (num === null || num === undefined) {
+					return '--'
+				}
+				const numValue = parseFloat(num)
+				if (Number.isNaN(numValue)) {
+					return '--'
+				}
+				const fixed = numValue.toFixed(2)
+				const parsed = parseFloat(fixed)
+				if (parsed % 1 === 0) {
+					return parsed.toString()
+				}
+				return parsed.toString()
 			},
 			updateChart() {
 				if (this.dataList.length === 0) return
