@@ -1,5 +1,5 @@
 // API基础地址 - 请根据实际情况修改
-const API_BASE = 'http://192.168.13.148:3000';
+const API_BASE = 'http://192.168.80.67:3000';
 
 // 获取用户列表
 export function getUserList() {

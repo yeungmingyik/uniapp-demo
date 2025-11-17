@@ -100,10 +100,51 @@
       height: 1px;
       z-index: -1;
     }
+    #login-screen {
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 <body class="hold-transition sidebar-mini">
-<div class="wrapper">
+<div id="login-screen" class="login-page" style="display: none;">
+  <div class="login-box">
+    <div class="login-logo">
+      <b>辟谷健康数据中心</b>
+    </div>
+    <div class="card">
+      <div class="card-body login-card-body">
+        <p class="login-box-msg">请输入账号密码登录</p>
+        <form id="login-form">
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" placeholder="账号" id="login-username" autocomplete="username" required>
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-user"></span>
+              </div>
+            </div>
+          </div>
+          <div class="input-group mb-3">
+            <input type="password" class="form-control" placeholder="密码" id="login-password" autocomplete="current-password" required>
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-lock"></span>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary btn-block">登录</button>
+            </div>
+          </div>
+        </form>
+        <div id="login-error" class="text-danger text-center mt-3" style="display: none;">账号或密码错误</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="wrapper" style="display: none;">
   <!-- Navbar -->
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
     <!-- Left navbar links -->
@@ -281,9 +322,9 @@
                     <input type="text" id="date-picker" style="position: absolute; top: 100%; left: 0; opacity: 0; pointer-events: none; width: 1px; height: 1px; margin-top: 5px;">
                   </div>
                   <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-outline-secondary time-range-btn" data-range="-1d">最近1天</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary time-range-btn" data-range="-3d">最近3天</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary time-range-btn" data-range="-7d">最近7天</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary time-range-btn" data-range="-15d">最近15天</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary time-range-btn active" data-range="-30d">最近30天</button>
                   </div>
                 </div>
@@ -327,8 +368,58 @@
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 
 <script>
+const AUTH_CONFIG = {
+  username: 'admin',
+  password: 'admin'
+};
+
+let dashboardInitialized = false;
+let statusIntervalId = null;
+
 // API基础URL
 const API_BASE = window.location.origin;
+
+function showLoginScreen() {
+  const loginScreen = document.getElementById('login-screen');
+  const wrapper = document.querySelector('.wrapper');
+  if (loginScreen) loginScreen.style.display = 'flex';
+  if (wrapper) wrapper.style.display = 'none';
+}
+
+function showDashboard() {
+  const loginScreen = document.getElementById('login-screen');
+  const wrapper = document.querySelector('.wrapper');
+  if (loginScreen) loginScreen.style.display = 'none';
+  if (wrapper) wrapper.style.display = 'block';
+}
+
+function handleLoginSubmit(event) {
+  event.preventDefault();
+  const username = document.getElementById('login-username')?.value.trim() || '';
+  const password = document.getElementById('login-password')?.value.trim() || '';
+  const errorEl = document.getElementById('login-error');
+
+  if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
+    if (errorEl) errorEl.style.display = 'none';
+    showDashboard();
+    initializeDashboard();
+  } else {
+    if (errorEl) {
+      errorEl.textContent = '账号或密码错误';
+      errorEl.style.display = 'block';
+    }
+  }
+}
+
+function initializeDashboard() {
+  if (dashboardInitialized) return;
+  dashboardInitialized = true;
+  checkStatus();
+  initDatePicker();
+  if (!statusIntervalId) {
+    statusIntervalId = setInterval(checkStatus, 30000);
+  }
+}
 
 // 检查服务器状态
 async function checkStatus() {
@@ -611,9 +702,6 @@ function initDatePicker() {
     datePickerBtnClickHandler = null;
   }
 
-  // 保存原始的onClose回调
-  let originalOnClose = null;
-  
   // 初始化Flatpickr，使用按钮触发
   datePicker = flatpickr(datePickerEl, {
     locale: 'zh',
@@ -684,9 +772,6 @@ function initDatePicker() {
       }
     }
   });
-  
-  // 保存原始的onClose回调
-  originalOnClose = datePicker.config.onClose;
 
   // 调整日历位置的函数
   const adjustCalendarPosition = function() {
@@ -878,28 +963,133 @@ async function loadHealthData() {
         });
       }
 
-      // 计算统计数据
-      const values = data.map(item => parseFloat(item.value));
-      const avg = formatNumber(values.reduce((sum, v) => sum + v, 0) / values.length);
-      const max = formatNumber(Math.max(...values));
-      const min = formatNumber(Math.min(...values));
+      if (data.length === 0) {
+        html += `
+          <div class="card mb-3">
+            <div class="card-header">
+              <h4 class="card-title">${fieldNames[field].name}</h4>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle mr-2"></i>暂无可用数据
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
 
-      // 准备图表数据
-      const times = data.map(item => {
-        const date = new Date(item.time || item.timestamp || item.datetime);
-        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-      });
-      const chartValues = values;
+      // 计算统计数据
+      const numericValues = data
+        .map(item => parseFloat(item.value))
+        .filter(val => !Number.isNaN(val));
+
+      if (numericValues.length === 0) {
+        html += `
+          <div class="card mb-3">
+            <div class="card-header">
+              <h4 class="card-title">${fieldNames[field].name}</h4>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle mr-2"></i>暂无可用数据
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const avg = formatNumber(numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length);
+      const max = formatNumber(Math.max(...numericValues));
+      const min = formatNumber(Math.min(...numericValues));
+
+      let chartTimes = [];
+      let chartValues = [];
+      let tooltipPayload = [];
+      const chartMode = isDateMode && selectedDate ? 'date' : 'range';
+
+      if (chartMode === 'date') {
+        chartTimes = data.map((_, index) => (index + 1).toString());
+        chartValues = data.map(item => {
+          const val = parseFloat(item.value);
+          return Number.isNaN(val) ? null : val;
+        });
+        tooltipPayload = data.map(item => ({
+          timestamp: item.time || item.timestamp || item.datetime,
+          value: parseFloat(item.value)
+        }));
+      } else {
+        const rangeDays = parseInt((currentTimeRange || '-30d').replace(/[^0-9]/g, ''), 10) || 30;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const buckets = Array.from({ length: rangeDays }, () => []);
+
+        data.forEach(item => {
+          const val = parseFloat(item.value);
+          if (Number.isNaN(val)) return;
+          const itemDate = new Date(item.time || item.timestamp || item.datetime);
+          const truncated = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+          const diff = Math.floor((today - truncated) / msPerDay);
+          if (diff >= 0 && diff < rangeDays) {
+            const dayNumber = rangeDays - diff;
+            buckets[dayNumber - 1].push({ value: val, date: truncated });
+          }
+        });
+
+        chartTimes = [];
+        chartValues = [];
+        tooltipPayload = [];
+        let hasAggregatedData = false;
+
+        for (let dayNumber = 1; dayNumber <= rangeDays; dayNumber++) {
+          const bucket = buckets[dayNumber - 1];
+          const targetDate = new Date(today);
+          targetDate.setDate(today.getDate() - (rangeDays - dayNumber));
+          let avgValue = null;
+          if (bucket.length > 0) {
+            const sum = bucket.reduce((acc, entry) => acc + entry.value, 0);
+            avgValue = sum / bucket.length;
+            hasAggregatedData = true;
+          }
+          chartTimes.push(dayNumber.toString());
+          chartValues.push(avgValue);
+          tooltipPayload.push({
+            dayNumber,
+            date: targetDate,
+            hasData: avgValue !== null && !Number.isNaN(avgValue),
+            value: avgValue
+          });
+        }
+
+        if (!hasAggregatedData) {
+          html += `
+            <div class="card mb-3">
+              <div class="card-header">
+                <h4 class="card-title">${fieldNames[field].name}</h4>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info mb-0">
+                  <i class="fas fa-info-circle mr-2"></i>暂无可用数据
+                </div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+      }
 
       const chartId = `chart-${field}`;
       
       // 保存图表数据用于后续创建图表
       chartDataMap[field] = {
         chartId,
-        times,
+        times: chartTimes,
         chartValues,
         fieldInfo: fieldNames[field],
-        rawData: data // 保存原始数据用于tooltip显示
+        rawData: tooltipPayload,
+        mode: chartMode
       };
 
       html += `
@@ -962,7 +1152,7 @@ async function loadHealthData() {
     // 创建所有ECharts图表
     setTimeout(() => {
       Object.keys(chartDataMap).forEach(field => {
-        const { chartId, times, chartValues, fieldInfo, rawData } = chartDataMap[field];
+        const { chartId, times, chartValues, fieldInfo, rawData, mode } = chartDataMap[field];
         const chartEl = document.getElementById(chartId);
         if (chartEl) {
           const chart = echarts.init(chartEl);
@@ -986,18 +1176,33 @@ async function loadHealthData() {
                 const param = params[0];
                 const dataIndex = param.dataIndex;
                 if (dataIndex < 0 || dataIndex >= rawData.length) return '';
-                const date = new Date(rawData[dataIndex].time || rawData[dataIndex].timestamp || rawData[dataIndex].datetime);
-                const year = date.getFullYear();
-                const month = date.getMonth() + 1;
-                const day = date.getDate();
-                const hours = date.getHours();
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const dateStr = `${year}年${month}月${day}日 ${hours}:${minutes}`;
-                let result = `<div style="margin-bottom: 6px; font-weight: 600; font-size: 14px;">${dateStr}</div>`;
+                const dataPoint = rawData[dataIndex];
+                let headerText = '';
+                if ((mode || 'range') === 'date' && dataPoint && dataPoint.timestamp) {
+                  const date = new Date(dataPoint.timestamp);
+                  const year = date.getFullYear();
+                  const month = date.getMonth() + 1;
+                  const day = date.getDate();
+                  const hours = date.getHours();
+                  const minutes = String(date.getMinutes()).padStart(2, '0');
+                  headerText = `${year}年${month}月${day}日 ${hours}:${minutes}`;
+                } else if (dataPoint && dataPoint.date) {
+                  const date = new Date(dataPoint.date);
+                  const year = date.getFullYear();
+                  const month = date.getMonth() + 1;
+                  const day = date.getDate();
+                  headerText = `第${dataPoint.dayNumber}天（${year}年${month}月${day}日）`;
+                } else {
+                  headerText = `第${dataIndex + 1}天`;
+                }
+                let result = `<div style="margin-bottom: 6px; font-weight: 600; font-size: 14px;">${headerText}</div>`;
                 params.forEach(function(item) {
+                  const valueText = item.value === null || item.value === undefined || Number.isNaN(item.value)
+                    ? '暂无数据'
+                    : `${formatNumber(item.value)} ${fieldInfo.unit}`;
                   result += `<div style="margin-top: 4px; line-height: 1.6;">
                     <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px; vertical-align: middle;"></span>
-                    ${item.seriesName}: <span style="font-weight: 600;">${item.value} ${fieldInfo.unit}</span>
+                    ${item.seriesName}: <span style="font-weight: 600;">${valueText}</span>
                   </div>`;
                 });
                 return result;
@@ -1136,15 +1341,13 @@ function formatNumber(num) {
   return parsed.toString();
 }
 
-// 页面加载时检查服务器状态
+// 页面加载逻辑（登录后再初始化）
 document.addEventListener('DOMContentLoaded', function() {
-  checkStatus();
-  
-  // 初始化日期选择器
-  initDatePicker();
-  
-  // 自动刷新服务器状态（每30秒）
-  setInterval(checkStatus, 30000);
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLoginSubmit);
+  }
+  showLoginScreen();
 });
 </script>
 </body>
