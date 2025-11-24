@@ -88,6 +88,26 @@ const looseToNumber = (val) => {
   const n2 = parseFloat(val);
   return isNaN(n2) ? val : n2;
 };
+function normalizeClass(value) {
+  let res = "";
+  if (isString(value)) {
+    res = value;
+  } else if (isArray(value)) {
+    for (let i2 = 0; i2 < value.length; i2++) {
+      const normalized = normalizeClass(value[i2]);
+      if (normalized) {
+        res += normalized + " ";
+      }
+    }
+  } else if (isObject(value)) {
+    for (const name in value) {
+      if (value[name]) {
+        res += name + " ";
+      }
+    }
+  }
+  return res.trim();
+}
 const toDisplayString = (val) => {
   return isString(val) ? val : val == null ? "" : isArray(val) || isObject(val) && (val.toString === objectToString || !isFunction(val.toString)) ? JSON.stringify(val, replacer, 2) : String(val);
 };
@@ -320,7 +340,8 @@ const MINI_PROGRAM_PAGE_RUNTIME_HOOKS = /* @__PURE__ */ (() => {
   return {
     onPageScroll: 1,
     onShareAppMessage: 1 << 1,
-    onShareTimeline: 1 << 2
+    onShareTimeline: 1 << 2,
+    onShareChat: 1 << 3
   };
 })();
 function isUniLifecycleHook(name, value, checkType = true) {
@@ -5152,6 +5173,7 @@ function vFor(source, renderItem) {
 const o$1 = (value, key) => vOn(value, key);
 const f$1 = (source, renderItem) => vFor(source, renderItem);
 const e$1 = (target, ...sources) => extend(target, ...sources);
+const n$1 = (value) => normalizeClass(value);
 const t$1 = (val) => toDisplayString(val);
 const p$1 = (props) => renderProps(props);
 function createApp$1(rootComponent, rootProps = null) {
@@ -6080,9 +6102,9 @@ function populateParameters(fromRes, toRes) {
     appVersion: "1.0.0",
     appVersionCode: "100",
     appLanguage: getAppLanguage(hostLanguage),
-    uniCompileVersion: "4.76",
-    uniCompilerVersion: "4.76",
-    uniRuntimeVersion: "4.76",
+    uniCompileVersion: "4.85",
+    uniCompilerVersion: "4.85",
+    uniRuntimeVersion: "4.85",
     uniPlatform: "mp-weixin",
     deviceBrand,
     deviceModel: model,
@@ -6231,9 +6253,9 @@ const getAppBaseInfo = {
       appLanguage: getAppLanguage(hostLanguage),
       isUniAppX: false,
       uniPlatform: "mp-weixin",
-      uniCompileVersion: "4.76",
-      uniCompilerVersion: "4.76",
-      uniRuntimeVersion: "4.76"
+      uniCompileVersion: "4.85",
+      uniCompilerVersion: "4.85",
+      uniRuntimeVersion: "4.85"
     };
     extend(toRes, parameters);
   }
@@ -6584,18 +6606,22 @@ function initOnError() {
       originalConsole.error(err);
     }
   }
-  if (typeof index.onError === "function") {
-    index.onError(onError2);
-  }
-  if (typeof index.onUnhandledRejection === "function") {
-    index.onUnhandledRejection(onError2);
+  if (typeof index !== "undefined") {
+    if (typeof index.onError === "function") {
+      index.onError(onError2);
+    }
+    if (typeof index.onUnhandledRejection === "function") {
+      index.onUnhandledRejection(onError2);
+    }
   }
   return function offError2() {
-    if (typeof index.offError === "function") {
-      index.offError(onError2);
-    }
-    if (typeof index.offUnhandledRejection === "function") {
-      index.offUnhandledRejection(onError2);
+    if (typeof index !== "undefined") {
+      if (typeof index.offError === "function") {
+        index.offError(onError2);
+      }
+      if (typeof index.offUnhandledRejection === "function") {
+        index.offUnhandledRejection(onError2);
+      }
     }
   };
 }
@@ -6973,9 +6999,9 @@ function isConsoleWritable() {
   return isWritable;
 }
 function initRuntimeSocketService() {
-  const hosts = "172.18.0.1,192.168.1.154,127.0.0.1";
+  const hosts = "172.18.0.1,192.168.80.76,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_O5N6yb";
+  const id = "mp-weixin_Ix5ZlM";
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -9636,7 +9662,7 @@ function Mt({ url: e2, data: t2, method: n2 = "POST", headers: s2 = {}, timeout:
   });
 }
 function qt(e2, t2) {
-  const { path: n2, data: s2, method: r2 = "GET" } = e2, { url: i2, headers: o2 } = Dt(n2, { functionName: "", data: s2, method: r2, headers: { "x-alipay-cloud-mode": "oss", "x-data-api-type": "oss", "x-expire-timestamp": Date.now() + 6e4 }, signHeaderKeys: ["x-data-api-type", "x-expire-timestamp"], config: t2 });
+  const { path: n2, data: s2, method: r2 = "GET" } = e2, { url: i2, headers: o2 } = Dt(n2, { functionName: "", data: s2, method: r2, headers: { "x-alipay-cloud-mode": "oss", "x-data-api-type": "oss", "x-expire-timestamp": String(Date.now() + 6e4) }, signHeaderKeys: ["x-data-api-type", "x-expire-timestamp"], config: t2 });
   return Mt({ url: i2, data: s2, method: r2, headers: o2 }).then((e3) => {
     const t3 = e3.data || {};
     if (!t3.success)
@@ -10796,6 +10822,7 @@ exports.createSSRApp = createSSRApp;
 exports.e = e$1;
 exports.f = f$1;
 exports.index = index;
+exports.n = n$1;
 exports.o = o$1;
 exports.p = p$1;
 exports.resolveComponent = resolveComponent;

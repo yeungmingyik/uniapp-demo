@@ -1,5 +1,5 @@
 // API基础地址 - 请根据实际情况修改
-const API_BASE = 'http://192.168.80.67:3000';
+const API_BASE = 'http://localhost:3000';
 
 // 获取用户列表
 export function getUserList() {
@@ -123,18 +123,21 @@ export async function getUserHealthDataMultiple(userId, fields = ['heart_rate', 
 }
 
 // 获取用户健康数据历史（用于详情页图表）
-export async function getUserHealthDataHistory(userId, field, timeRange = '-30d', tags = {}) {
+export async function getUserHealthDataHistory(userId, field, timeRange = '-30d', tags = {}, limit = null) {
 	try {
 		const data = await getUserHealthData(userId, field, timeRange, tags);
 		if (Array.isArray(data)) {
-			// 按时间排序（从新到旧）
-			const sortedData = data.sort((a, b) => {
+			const sortedData = [...data].sort((a, b) => {
 				const timeA = a.time || a.timestamp || a.datetime || '';
 				const timeB = b.time || b.timestamp || b.datetime || '';
-				return new Date(timeB) - new Date(timeA);
+				return new Date(timeA) - new Date(timeB);
 			});
-			// 只返回最近20条数据
-			return sortedData.slice(0, 20).reverse(); // 反转后按时间从旧到新，便于图表显示
+			
+			if (typeof limit === 'number' && limit > 0) {
+				return sortedData.slice(-limit);
+			}
+			
+			return sortedData;
 		}
 		return [];
 	} catch (error) {
