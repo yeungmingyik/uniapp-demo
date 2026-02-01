@@ -31,7 +31,6 @@
 		
 		<view class="chart-container" v-if="dataList.length > 0">
 			<qiun-data-charts 
-				class="chart-canvas"
 				type="line"
 				:chartData="chartData"
 				:opts="chartOpts"
@@ -41,16 +40,20 @@
 		
 		<view class="data-stats" v-if="dataList.length > 0">
 			<view class="stat-item">
+				<text class="stat-label">数据点数</text>
+				<text class="stat-value">{{ dataList.length }}</text>
+			</view>
+			<view class="stat-item">
 				<text class="stat-label">平均值</text>
-				<text class="stat-value">{{ formatNumber(stats.avg) }} {{ unit }}</text>
+				<text class="stat-value">{{ formatNumber(averageValue) }} {{ unit }}</text>
 			</view>
 			<view class="stat-item">
 				<text class="stat-label">最大值</text>
-				<text class="stat-value">{{ formatNumber(stats.max) }} {{ unit }}</text>
+				<text class="stat-value">{{ formatNumber(maxValue) }} {{ unit }}</text>
 			</view>
 			<view class="stat-item">
 				<text class="stat-label">最小值</text>
-				<text class="stat-value">{{ formatNumber(stats.min) }} {{ unit }}</text>
+				<text class="stat-value">{{ formatNumber(minValue) }} {{ unit }}</text>
 			</view>
 		</view>
 		
@@ -86,9 +89,8 @@
 				chartData: {},
 				chartOpts: {
 					color: ['#36A2EB'],
-					padding: [50, 20, 40, 2],
+					padding: [15, 15, 0, 15],
 					enableScroll: false,
-					dataLabel: false,
 					legend: {
 						show: false
 					},
@@ -110,51 +112,59 @@
 				currentTimeRange: '-30d',
 				isDateMode: false,
 				selectedDate: '',
-				tags: {},
-				stats: {
-					avg: null,
-					max: null,
-					min: null
-				}
+				tags: {}
 			}
 		},
 		computed: {
-			dateButtonLabel() {
-				if (this.isDateMode && this.selectedDate) {
-					return this.selectedDate
+			averageValue() {
+				if (this.dataList.length === 0) return 0
+					const sum = this.dataList.reduce((acc, item) => acc + parseFloat(item.value), 0)
+					return sum / this.dataList.length
+				},
+				maxValue() {
+					if (this.dataList.length === 0) return 0
+					return Math.max(...this.dataList.map(item => parseFloat(item.value)))
+				},
+				minValue() {
+					if (this.dataList.length === 0) return 0
+					return Math.min(...this.dataList.map(item => parseFloat(item.value)))
+				},
+				dateButtonLabel() {
+					if (this.isDateMode && this.selectedDate) {
+						return this.selectedDate
+					}
+					return '选择日期'
+				},
+				pickerValue() {
+					if (this.selectedDate) return this.selectedDate
+					return this.formatDateString(new Date())
 				}
-				return '选择日期'
 			},
-			pickerValue() {
-				if (this.selectedDate) return this.selectedDate
-				return this.formatDateString(new Date())
-			}
-		},
-		onLoad(options) {
-			this.userId = options.userId || ''
-			this.field = options.field || ''
-			
-			if (fieldConfig[this.field]) {
-				this.fieldName = fieldConfig[this.field].name
-				this.unit = fieldConfig[this.field].unit
-				this.chartOpts.color = [fieldConfig[this.field].color]
-			}
-			
-			// 获取设备筛选参数
-			const deviceId = options.deviceId || ''
-			const deviceName = options.deviceName || ''
-			const tags = {}
-			if (deviceId) tags.device_id = deviceId
-			if (deviceName) tags.device_name = deviceName
-			
-			this.tags = { ...tags }
-			this.loadData()
-		},
-		methods: {
+			onLoad(options) {
+				this.userId = options.userId || ''
+				this.field = options.field || ''
+				
+				if (fieldConfig[this.field]) {
+					this.fieldName = fieldConfig[this.field].name
+					this.unit = fieldConfig[this.field].unit
+					this.chartOpts.color = [fieldConfig[this.field].color]
+				}
+				
+				// 获取设备筛选参数
+				const deviceId = options.deviceId || ''
+				const deviceName = options.deviceName || ''
+				const tags = {}
+				if (deviceId) tags.device_id = deviceId
+				if (deviceName) tags.device_name = deviceName
+				
+				this.tags = { ...tags }
+				this.loadData()
+				uni.setNavigationBarTitle({ title: '健康监测系统' })
+			},
+			methods: {
 			async loadData() {
 				if (!this.userId || !this.field) {
 					this.loading = false
-					this.resetStats()
 					return
 				}
 				
@@ -164,7 +174,6 @@
 					if (rangeForQuery === null) {
 						this.dataList = []
 						this.chartData = {}
-						this.resetStats()
 						this.loading = false
 						return
 					}
@@ -180,12 +189,10 @@
 						const hasChart = this.updateChart(filtered)
 						if (!hasChart) {
 							this.dataList = []
-							this.resetStats()
 						}
 					} else {
 						this.dataList = []
 						this.chartData = {}
-						this.resetStats()
 					}
 				} catch (error) {
 					console.error('加载数据失败:', error)
@@ -194,7 +201,6 @@
 						icon: 'none'
 					})
 					this.dataList = []
-					this.resetStats()
 				} finally {
 					this.loading = false
 				}
@@ -256,8 +262,7 @@
 					.filter(item => item && item.value !== null && item.value !== undefined)
 					.map(item => ({
 						...item,
-						time: item.time || item.timestamp || item.datetime || '',
-						value: this.truncateNumber(item.value)
+						time: item.time || item.timestamp || item.datetime || ''
 					}))
 					.sort((a, b) => new Date(a.time || 0) - new Date(b.time || 0))
 			},
@@ -274,21 +279,19 @@
 			updateChart(data = []) {
 				const numericPoints = data
 					.map(item => ({
-						value: this.truncateNumber(item.value),
+						value: parseFloat(item.value),
 						time: item.time || item.timestamp || item.datetime || ''
 					}))
-					.filter(item => item.value !== null)
+					.filter(item => !Number.isNaN(item.value))
 				
 				if (numericPoints.length === 0) {
 					this.chartData = {}
-					this.resetStats()
 					return false
 				}
 				
 				if (this.isDateMode && this.selectedDate) {
 					const categories = numericPoints.map((_, index) => `${index + 1}`)
 					const values = numericPoints.map(point => point.value)
-					this.applyYAxisPadding(values)
 					this.chartData = {
 						categories,
 						series: [{
@@ -296,7 +299,6 @@
 							data: values
 						}]
 					}
-					this.stats = this.buildDateStats(values)
 					return true
 				}
 				
@@ -322,7 +324,7 @@
 					let avg = null
 					if (bucket.length > 0) {
 						const sum = bucket.reduce((acc, val) => acc + val, 0)
-						avg = this.truncateNumber(sum / bucket.length)
+						avg = sum / bucket.length
 						hasData = true
 					}
 					categories.push(dayNumber.toString())
@@ -331,11 +333,9 @@
 				
 				if (!hasData) {
 					this.chartData = {}
-					this.resetStats()
 					return false
 				}
 				
-				this.applyYAxisPadding(values)
 				this.chartData = {
 					categories,
 					series: [{
@@ -343,7 +343,6 @@
 						data: values
 					}]
 				}
-				this.stats = this.buildRangeStats(values, rangeDays)
 				return true
 			},
 			getDayStart(target) {
@@ -357,77 +356,6 @@
 				const month = String(target.getMonth() + 1).padStart(2, '0')
 				const day = String(target.getDate()).padStart(2, '0')
 				return `${year}-${month}-${day}`
-			},
-			truncateNumber(value) {
-				if (value === null || value === undefined) return null
-				const num = parseFloat(value)
-				if (Number.isNaN(num)) return null
-				return parseFloat(num.toFixed(2))
-			},
-			buildDateStats(values = []) {
-				if (!Array.isArray(values) || values.length === 0) {
-					return { avg: null, max: null, min: null }
-				}
-				const sanitized = values.filter(val => val !== null && !Number.isNaN(val))
-				if (sanitized.length === 0) {
-					return { avg: null, max: null, min: null }
-				}
-				const sum = sanitized.reduce((acc, val) => acc + val, 0)
-				return {
-					avg: this.truncateNumber(sum / sanitized.length),
-					max: this.truncateNumber(Math.max(...sanitized)),
-					min: this.truncateNumber(Math.min(...sanitized))
-				}
-			},
-			buildRangeStats(values = [], rangeDays = 1) {
-				if (!Array.isArray(values) || values.length === 0) {
-					return { avg: null, max: null, min: null }
-				}
-				const validValues = values.filter(val => val !== null && !Number.isNaN(val))
-				if (validValues.length === 0) {
-					return { avg: null, max: null, min: null }
-				}
-				const sum = validValues.reduce((acc, val) => acc + val, 0)
-				return {
-					avg: this.truncateNumber(sum / validValues.length),
-					max: this.truncateNumber(Math.max(...validValues)),
-					min: this.truncateNumber(Math.min(...validValues))
-				}
-			},
-			resetStats() {
-				this.stats = { avg: null, max: null, min: null }
-			},
-			applyYAxisPadding(values = []) {
-				const sanitized = Array.isArray(values)
-					? values.filter(val => val !== null && !Number.isNaN(val))
-					: []
-				if (sanitized.length === 0) {
-					this.chartOpts = {
-						...this.chartOpts,
-						yAxis: {
-							...this.chartOpts.yAxis,
-							min: null,
-							max: null
-						}
-					}
-					return
-				}
-				const currentMin = Math.min(...sanitized)
-				const currentMax = Math.max(...sanitized)
-				const range = currentMax - currentMin
-				const padding = range === 0
-					? Math.max(Math.abs(currentMax) * 0.1, 1)
-					: range * 0.1
-				const targetMin = this.truncateNumber(currentMin - padding)
-				const targetMax = this.truncateNumber(currentMax + padding)
-				this.chartOpts = {
-					...this.chartOpts,
-					yAxis: {
-						...this.chartOpts.yAxis,
-						min: targetMin,
-						max: targetMax
-					}
-				}
 			}
 		}
 	}
@@ -546,38 +474,26 @@
 	.chart-container {
 		background-color: #FFFFFF;
 		border-radius: 16rpx;
-		padding: 20rpx 10rpx 30rpx 0;
-		margin: 0 0 32rpx -10rpx;
+		padding: 20rpx;
+		margin-bottom: 32rpx;
 		box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.06);
-		height: 520rpx;
-		width: calc(100% + 10rpx);
-		overflow: hidden;
-		box-sizing: border-box;
-	}
-	
-	.chart-canvas {
-		width: 100% !important;
-		height: 100% !important;
+		height: 400rpx;
+		width: 100%;
 	}
 	
 	.data-stats {
 		background-color: #FFFFFF;
 		border-radius: 16rpx;
 		padding: 32rpx;
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: 24rpx;
 		box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.06);
 	}
 	
 	.stat-item {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 16rpx 20rpx;
-		border-radius: 12rpx;
-		background: linear-gradient(120deg, #f9fafc, #f1f3f6);
-		box-shadow: inset 0 0 0 1rpx rgba(0,0,0,0.02);
+		flex-direction: column;
 	}
 	
 	.stat-label {

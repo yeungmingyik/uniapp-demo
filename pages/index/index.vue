@@ -19,7 +19,7 @@
 			</view>
 
 			<view v-if="activeTab === 'health'" class="tab-panel">
-				<view class="section-title">健康数据</view>
+				<view class="section-title">健康监测中心</view>
 				<view class="cards">
 					<view class="card" @click="goToDetail('temperature')">
 						<view class="card-header-row">
@@ -57,6 +57,23 @@
 							<text class="unit-text" v-if="spo2Value !== null">%</text>
 						</view>
 						<view class="card-time">{{ spo2TimeText }}</view>
+					</view>
+				</view>
+
+				<view class="section-title ai-report-title">AI 健康分析报告</view>
+				<view class="ai-report-card">
+					<view class="ai-report-header">
+						<text class="card-title">AI 智能分析报告</text>
+						<text class="ai-time">{{ formattedDate }}</text>
+					</view>
+					<view class="ai-report-content">
+						<view v-if="loadingAiReport" class="ai-loading">
+							<text class="loading-text">AI 正在深度分析中...</text>
+						</view>
+						<rich-text v-else-if="aiReportContent" :nodes="renderMarkdown(aiReportContent)"></rich-text>
+						<view v-else class="ai-empty">
+							<text class="empty-text">暂无分析报告</text>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -168,7 +185,9 @@
 				timeUpdateTimer: null,
 				showAddDeviceModal: false,
 				newDeviceId: '',
-				newDeviceName: ''
+				newDeviceName: '',
+				aiReportContent: '',
+				loadingAiReport: false
 			}
 		},
 		computed: {
@@ -201,7 +220,7 @@
 			])
 			this.restoreSelectedDevice()
 			this.loadHealthData()
-			uni.setNavigationBarTitle({ title: '辟谷养生' })
+			uni.setNavigationBarTitle({ title: '健康监测系统' })
 		},
 		onShow() {
 			this.updateTimeTexts()
@@ -224,7 +243,7 @@
 		methods: {
 			switchTab(tab) {
 				this.activeTab = tab
-				uni.setNavigationBarTitle({ title: '辟谷养生' })
+				uni.setNavigationBarTitle({ title: '健康监测系统' })
 			},
 			deviceKey(device) {
 				return `${device.id || 'noid'}__${device.name || 'noname'}`
@@ -449,6 +468,7 @@
 					return
 				}
 				uni.showLoading({ title: '加载中...' })
+				this.loadingAiReport = true
 				try {
 					const tags = {}
 					if (this.selectedDeviceId) tags.device_id = this.selectedDeviceId
@@ -457,9 +477,11 @@
 						this.currentUser,
 						['heart_rate', 'temperature', 'blood_oxygen'],
 						'-365d',
-						tags
+						tags,
+						true // 获取 AI 报告
 					)
 					this.applyHealthResults(results)
+					this.aiReportContent = results.aiReport || ''
 				} catch (error) {
 					console.error('加载健康数据失败:', error)
 					uni.showToast({ title: '加载数据失败', icon: 'none' })
@@ -469,6 +491,7 @@
 					this.spo2TimeText = '数据加载失败'
 				} finally {
 					uni.hideLoading()
+					this.loadingAiReport = false
 				}
 			},
 			applyHealthResults(results) {
@@ -597,6 +620,25 @@
 					url += `&deviceName=${this.selectedDeviceName}`
 				}
 				uni.navigateTo({ url })
+			},
+			renderMarkdown(content) {
+				if (!content) return ''
+				
+				// 简单的 Markdown 转 HTML 逻辑
+				let html = content
+					// 处理标题
+					.replace(/^### (.*$)/gim, '<h3 style="font-size: 30rpx; font-weight: bold; margin: 20rpx 0 10rpx;">$1</h3>')
+					.replace(/^## (.*$)/gim, '<h2 style="font-size: 34rpx; font-weight: bold; margin: 24rpx 0 12rpx;">$1</h2>')
+					.replace(/^# (.*$)/gim, '<h1 style="font-size: 38rpx; font-weight: bold; margin: 28rpx 0 14rpx;">$1</h1>')
+					// 处理粗体
+					.replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+					// 处理列表
+					.replace(/^\* (.*$)/gim, '<div style="display: flex; margin-bottom: 8rpx;"><span style="margin-right: 10rpx;">•</span><span>$1</span></div>')
+					.replace(/^- (.*$)/gim, '<div style="display: flex; margin-bottom: 8rpx;"><span style="margin-right: 10rpx;">•</span><span>$1</span></div>')
+					// 处理换行
+					.replace(/\n/gim, '<br />')
+				
+				return `<div style="line-height: 1.6; color: #333; font-size: 28rpx;">${html}</div>`
 			}
 		}
 	}
@@ -971,5 +1013,53 @@
 		background: linear-gradient(135deg, #40c78d, #1e8e5b);
 		color: #fff;
 		box-shadow: 0 8rpx 24rpx rgba(30, 142, 91, 0.25);
+	}
+
+	.ai-report-title {
+		margin-top: 40rpx;
+	}
+
+	.ai-report-card {
+		background-color: #FFFFFF;
+		border-radius: 20rpx;
+		padding: 24rpx;
+		box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.06);
+		margin-bottom: 32rpx;
+		min-height: 200rpx;
+	}
+
+	.ai-report-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20rpx;
+	}
+
+	.ai-badge {
+		background: #f0f2f5;
+		color: #666;
+		font-size: 22rpx;
+		padding: 4rpx 16rpx;
+		border-radius: 8rpx;
+		font-weight: 600;
+	}
+
+	.ai-time {
+		font-size: 24rpx;
+		color: #999;
+	}
+
+	.ai-report-content {
+		word-break: break-all;
+	}
+
+	.ai-loading, .ai-empty {
+		padding: 40rpx 0;
+		text-align: center;
+	}
+
+	.loading-text, .empty-text {
+		font-size: 26rpx;
+		color: #999;
 	}
 </style>

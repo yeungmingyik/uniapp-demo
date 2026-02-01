@@ -19,9 +19,8 @@ const _sfc_main = {
       chartData: {},
       chartOpts: {
         color: ["#36A2EB"],
-        padding: [50, 20, 40, 2],
+        padding: [15, 15, 0, 15],
         enableScroll: false,
-        dataLabel: false,
         legend: {
           show: false
         },
@@ -43,15 +42,26 @@ const _sfc_main = {
       currentTimeRange: "-30d",
       isDateMode: false,
       selectedDate: "",
-      tags: {},
-      stats: {
-        avg: null,
-        max: null,
-        min: null
-      }
+      tags: {}
     };
   },
   computed: {
+    averageValue() {
+      if (this.dataList.length === 0)
+        return 0;
+      const sum = this.dataList.reduce((acc, item) => acc + parseFloat(item.value), 0);
+      return sum / this.dataList.length;
+    },
+    maxValue() {
+      if (this.dataList.length === 0)
+        return 0;
+      return Math.max(...this.dataList.map((item) => parseFloat(item.value)));
+    },
+    minValue() {
+      if (this.dataList.length === 0)
+        return 0;
+      return Math.min(...this.dataList.map((item) => parseFloat(item.value)));
+    },
     dateButtonLabel() {
       if (this.isDateMode && this.selectedDate) {
         return this.selectedDate;
@@ -81,12 +91,12 @@ const _sfc_main = {
       tags.device_name = deviceName;
     this.tags = { ...tags };
     this.loadData();
+    common_vendor.index.setNavigationBarTitle({ title: "健康监测系统" });
   },
   methods: {
     async loadData() {
       if (!this.userId || !this.field) {
         this.loading = false;
-        this.resetStats();
         return;
       }
       this.loading = true;
@@ -95,7 +105,6 @@ const _sfc_main = {
         if (rangeForQuery === null) {
           this.dataList = [];
           this.chartData = {};
-          this.resetStats();
           this.loading = false;
           return;
         }
@@ -107,21 +116,18 @@ const _sfc_main = {
           const hasChart = this.updateChart(filtered);
           if (!hasChart) {
             this.dataList = [];
-            this.resetStats();
           }
         } else {
           this.dataList = [];
           this.chartData = {};
-          this.resetStats();
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/detail/detail.vue:191", "加载数据失败:", error);
+        common_vendor.index.__f__("error", "at pages/detail/detail.vue:198", "加载数据失败:", error);
         common_vendor.index.showToast({
           title: "加载数据失败",
           icon: "none"
         });
         this.dataList = [];
-        this.resetStats();
       } finally {
         this.loading = false;
       }
@@ -187,8 +193,7 @@ const _sfc_main = {
         return [];
       return data.filter((item) => item && item.value !== null && item.value !== void 0).map((item) => ({
         ...item,
-        time: item.time || item.timestamp || item.datetime || "",
-        value: this.truncateNumber(item.value)
+        time: item.time || item.timestamp || item.datetime || ""
       })).sort((a, b) => new Date(a.time || 0) - new Date(b.time || 0));
     },
     filterBySelectedDate(data = []) {
@@ -204,18 +209,16 @@ const _sfc_main = {
     },
     updateChart(data = []) {
       const numericPoints = data.map((item) => ({
-        value: this.truncateNumber(item.value),
+        value: parseFloat(item.value),
         time: item.time || item.timestamp || item.datetime || ""
-      })).filter((item) => item.value !== null);
+      })).filter((item) => !Number.isNaN(item.value));
       if (numericPoints.length === 0) {
         this.chartData = {};
-        this.resetStats();
         return false;
       }
       if (this.isDateMode && this.selectedDate) {
         const categories2 = numericPoints.map((_, index) => `${index + 1}`);
         const values2 = numericPoints.map((point) => point.value);
-        this.applyYAxisPadding(values2);
         this.chartData = {
           categories: categories2,
           series: [{
@@ -223,7 +226,6 @@ const _sfc_main = {
             data: values2
           }]
         };
-        this.stats = this.buildDateStats(values2);
         return true;
       }
       const rangeDays = parseInt(this.currentTimeRange.replace(/[^0-9]/g, ""), 10) || 30;
@@ -246,7 +248,7 @@ const _sfc_main = {
         let avg = null;
         if (bucket.length > 0) {
           const sum = bucket.reduce((acc, val) => acc + val, 0);
-          avg = this.truncateNumber(sum / bucket.length);
+          avg = sum / bucket.length;
           hasData = true;
         }
         categories.push(dayNumber.toString());
@@ -254,10 +256,8 @@ const _sfc_main = {
       }
       if (!hasData) {
         this.chartData = {};
-        this.resetStats();
         return false;
       }
-      this.applyYAxisPadding(values);
       this.chartData = {
         categories,
         series: [{
@@ -265,7 +265,6 @@ const _sfc_main = {
           data: values
         }]
       };
-      this.stats = this.buildRangeStats(values, rangeDays);
       return true;
     },
     getDayStart(target) {
@@ -279,75 +278,6 @@ const _sfc_main = {
       const month = String(target.getMonth() + 1).padStart(2, "0");
       const day = String(target.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
-    },
-    truncateNumber(value) {
-      if (value === null || value === void 0)
-        return null;
-      const num = parseFloat(value);
-      if (Number.isNaN(num))
-        return null;
-      return parseFloat(num.toFixed(2));
-    },
-    buildDateStats(values = []) {
-      if (!Array.isArray(values) || values.length === 0) {
-        return { avg: null, max: null, min: null };
-      }
-      const sanitized = values.filter((val) => val !== null && !Number.isNaN(val));
-      if (sanitized.length === 0) {
-        return { avg: null, max: null, min: null };
-      }
-      const sum = sanitized.reduce((acc, val) => acc + val, 0);
-      return {
-        avg: this.truncateNumber(sum / sanitized.length),
-        max: this.truncateNumber(Math.max(...sanitized)),
-        min: this.truncateNumber(Math.min(...sanitized))
-      };
-    },
-    buildRangeStats(values = [], rangeDays = 1) {
-      if (!Array.isArray(values) || values.length === 0) {
-        return { avg: null, max: null, min: null };
-      }
-      const validValues = values.filter((val) => val !== null && !Number.isNaN(val));
-      if (validValues.length === 0) {
-        return { avg: null, max: null, min: null };
-      }
-      const sum = validValues.reduce((acc, val) => acc + val, 0);
-      return {
-        avg: this.truncateNumber(sum / validValues.length),
-        max: this.truncateNumber(Math.max(...validValues)),
-        min: this.truncateNumber(Math.min(...validValues))
-      };
-    },
-    resetStats() {
-      this.stats = { avg: null, max: null, min: null };
-    },
-    applyYAxisPadding(values = []) {
-      const sanitized = Array.isArray(values) ? values.filter((val) => val !== null && !Number.isNaN(val)) : [];
-      if (sanitized.length === 0) {
-        this.chartOpts = {
-          ...this.chartOpts,
-          yAxis: {
-            ...this.chartOpts.yAxis,
-            min: null,
-            max: null
-          }
-        };
-        return;
-      }
-      const currentMin = Math.min(...sanitized);
-      const currentMax = Math.max(...sanitized);
-      const range = currentMax - currentMin;
-      const padding = range === 0 ? Math.max(Math.abs(currentMax) * 0.1, 1) : range * 0.1;
-      const targetMin = this.truncateNumber(currentMin - padding);
-      const targetMax = this.truncateNumber(currentMax + padding);
-      this.chartOpts = {
-        ...this.chartOpts,
-        yAxis: {
-          ...this.chartOpts.yAxis,
-          min: targetMin,
-          max: targetMax
-        }
-      };
     }
   }
 };
@@ -389,16 +319,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     k: $data.dataList.length > 0
   }, $data.dataList.length > 0 ? {
-    l: common_vendor.t($options.formatNumber($data.stats.avg)),
-    m: common_vendor.t($data.unit),
-    n: common_vendor.t($options.formatNumber($data.stats.max)),
-    o: common_vendor.t($data.unit),
-    p: common_vendor.t($options.formatNumber($data.stats.min)),
-    q: common_vendor.t($data.unit)
+    l: common_vendor.t($data.dataList.length),
+    m: common_vendor.t($options.formatNumber($options.averageValue)),
+    n: common_vendor.t($data.unit),
+    o: common_vendor.t($options.formatNumber($options.maxValue)),
+    p: common_vendor.t($data.unit),
+    q: common_vendor.t($options.formatNumber($options.minValue)),
+    r: common_vendor.t($data.unit)
   } : {}, {
-    r: $data.loading
+    s: $data.loading
   }, $data.loading ? {} : {}, {
-    s: !$data.loading && $data.dataList.length === 0
+    t: !$data.loading && $data.dataList.length === 0
   }, !$data.loading && $data.dataList.length === 0 ? {} : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

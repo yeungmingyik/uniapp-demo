@@ -321,3 +321,43 @@
 		color: #fff;
 		box-shadow: 0 8rpx 24rpx rgba(30, 142, 91, 0.25);
 }
+.ai-report-title {
+		margin-top: 40rpx;
+}
+.ai-report-card {
+		background-color: #FFFFFF;
+		border-radius: 20rpx;
+		padding: 24rpx;
+		box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.06);
+		margin-bottom: 32rpx;
+		min-height: 200rpx;
+}
+.ai-report-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20rpx;
+}
+.ai-badge {
+		background: #f0f2f5;
+		color: #666;
+		font-size: 22rpx;
+		padding: 4rpx 16rpx;
+		border-radius: 8rpx;
+		font-weight: 600;
+}
+.ai-time {
+		font-size: 24rpx;
+		color: #999;
+}
+.ai-report-content {
+		word-break: break-all;
+}
+.ai-loading, .ai-empty {
+		padding: 40rpx 0;
+		text-align: center;
+}
+.loading-text, .empty-text {
+		font-size: 26rpx;
+		color: #999;
+}

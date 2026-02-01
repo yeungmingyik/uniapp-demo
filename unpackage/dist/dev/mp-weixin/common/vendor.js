@@ -6999,9 +6999,9 @@ function isConsoleWritable() {
   return isWritable;
 }
 function initRuntimeSocketService() {
-  const hosts = "172.18.0.1,192.168.80.76,127.0.0.1";
+  const hosts = "198.18.0.1,192.168.1.4,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_rXRiZb";
+  const id = "mp-weixin_TRTRxY";
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -7960,7 +7960,7 @@ const pages = [
 ];
 const globalStyle = {
   navigationBarTextStyle: "black",
-  navigationBarTitleText: "辟谷养生",
+  navigationBarTitleText: "健康监测系统",
   navigationBarBackgroundColor: "#F8F8F8",
   backgroundColor: "#F8F8F8"
 };

@@ -1,6 +1,6 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://boshangtech.xyz";
 function getUserList() {
   return new Promise((resolve, reject) => {
     common_vendor.index.request({
@@ -21,11 +21,14 @@ function getUserList() {
     });
   });
 }
-function getUserHealthData(userId, field, timeRange = "", tags = {}) {
+function getUserHealthData(userId, field, timeRange = "", tags = {}, aiReport = false) {
   const requestBody = { user_id: userId };
   if (timeRange)
     requestBody.time_range = timeRange;
   requestBody.fields = field;
+  if (aiReport) {
+    requestBody.ai_report = true;
+  }
   if (Object.keys(tags).length > 0) {
     requestBody.tags = tags;
   }
@@ -37,17 +40,26 @@ function getUserHealthData(userId, field, timeRange = "", tags = {}) {
         "Content-Type": "application/json"
       },
       data: requestBody,
-      timeout: 1e4,
+      timeout: 2e4,
+      // AI 报告可能需要更长时间
       success: (res) => {
+        var _a;
         if (res.statusCode === 200 && res.data.status === "success") {
-          resolve(res.data.user_data || []);
+          if (aiReport) {
+            resolve({
+              data: res.data.user_data || [],
+              aiReport: ((_a = res.data.user_data) == null ? void 0 : _a.ai_report) || res.data.ai_report || ""
+            });
+          } else {
+            resolve(res.data.user_data || []);
+          }
         } else {
-          resolve([]);
+          resolve(aiReport ? { data: [], aiReport: "" } : []);
         }
       },
       fail: (err) => {
-        common_vendor.index.__f__("error", "at utils/api.js:52", `获取${field}数据失败:`, err);
-        resolve([]);
+        common_vendor.index.__f__("error", "at utils/api.js:64", `获取${field}数据失败:`, err);
+        resolve(aiReport ? { data: [], aiReport: "" } : []);
       }
     });
   });
@@ -72,7 +84,7 @@ function getDeviceOptions() {
         }
       },
       fail: (err) => {
-        common_vendor.index.__f__("error", "at utils/api.js:80", "获取设备列表失败:", err);
+        common_vendor.index.__f__("error", "at utils/api.js:92", "获取设备列表失败:", err);
         resolve({
           deviceIds: [],
           deviceNames: []
@@ -81,11 +93,19 @@ function getDeviceOptions() {
     });
   });
 }
-async function getUserHealthDataMultiple(userId, fields = ["heart_rate", "temperature", "blood_oxygen"], timeRange = "", tags = {}) {
-  const results = {};
+async function getUserHealthDataMultiple(userId, fields = ["heart_rate", "temperature", "blood_oxygen"], timeRange = "", tags = {}, aiReport = false) {
+  const results = {
+    aiReport: ""
+  };
   const promises = fields.map(
-    (field) => getUserHealthData(userId, field, timeRange, tags).then((data) => ({ field, data })).catch((error) => {
-      common_vendor.index.__f__("error", "at utils/api.js:97", `获取${field}数据失败:`, error);
+    (field, index) => getUserHealthData(userId, field, timeRange, tags, aiReport && index === 0).then((res) => {
+      if (aiReport && index === 0) {
+        results.aiReport = res.aiReport;
+        return { field, data: res.data };
+      }
+      return { field, data: res };
+    }).catch((error) => {
+      common_vendor.index.__f__("error", "at utils/api.js:119", `获取${field}数据失败:`, error);
       return { field, data: [] };
     })
   );
@@ -124,7 +144,7 @@ async function getUserHealthDataHistory(userId, field, timeRange = "-30d", tags 
     }
     return [];
   } catch (error) {
-    common_vendor.index.__f__("error", "at utils/api.js:144", `获取${field}历史数据失败:`, error);
+    common_vendor.index.__f__("error", "at utils/api.js:166", `获取${field}历史数据失败:`, error);
     return [];
   }
 }

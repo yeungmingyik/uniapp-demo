@@ -95,35 +95,24 @@
 .chart-container {
 		background-color: #FFFFFF;
 		border-radius: 16rpx;
-		padding: 20rpx 10rpx 30rpx 0;
-		margin: 0 0 32rpx -10rpx;
+		padding: 20rpx;
+		margin-bottom: 32rpx;
 		box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.06);
-		height: 520rpx;
-		width: calc(100% + 10rpx);
-		overflow: hidden;
-		box-sizing: border-box;
-}
-.chart-canvas {
-		width: 100% !important;
-		height: 100% !important;
+		height: 400rpx;
+		width: 100%;
 }
 .data-stats {
 		background-color: #FFFFFF;
 		border-radius: 16rpx;
 		padding: 32rpx;
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: 24rpx;
 		box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.06);
 }
 .stat-item {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 16rpx 20rpx;
-		border-radius: 12rpx;
-		background: linear-gradient(120deg, #f9fafc, #f1f3f6);
-		box-shadow: inset 0 0 0 1rpx rgba(0,0,0,0.02);
+		flex-direction: column;
 }
 .stat-label {
 		font-size: 24rpx;

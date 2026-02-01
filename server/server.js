@@ -7,8 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 阿里云服务器配置
-const ALIYUN_SERVER = 'http://8.138.250.160:6688';
-const REQUEST_TIMEOUT = 10000; // 10秒超时
+const ALIYUN_SERVER = 'http://106.53.18.196:6688';
+const REQUEST_TIMEOUT = 120000; // 延长至 120 秒，以支持 AI 报告生成
 const DEVICE_CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存设备列表
 
 // 中间件
@@ -104,7 +104,7 @@ app.get('/api/users', async (req, res) => {
 // API路由：查询用户健康数据
 app.post('/api/health/user', async (req, res) => {
   try {
-    const { user_id, time_range, fields, tags } = req.body;
+    const { user_id, time_range, fields, tags, ai_report } = req.body;
 
     // 验证必填参数
     if (!user_id) {
@@ -120,9 +120,10 @@ app.post('/api/health/user', async (req, res) => {
     if (time_range) requestBody.time_range = time_range;
     if (fields) requestBody.fields = fields;
     if (tags) requestBody.tags = tags;
+    if (ai_report) requestBody.ai_report = ai_report;
 
     const response = await axios.post(`${ALIYUN_SERVER}/api/health/user`, requestBody, {
-      timeout: REQUEST_TIMEOUT,
+      timeout: REQUEST_TIMEOUT * 3, // AI 报告需要更长时间
       validateStatus: () => true
     });
 
@@ -132,6 +133,7 @@ app.post('/api/health/user', async (req, res) => {
           status: 'success',
           task_id: response.data.task_id || null,
           user_data: response.data.user_data || {},
+          ai_report: response.data.ai_report || (response.data.user_data && response.data.user_data.ai_report) || null,
           message: response.data.message || '查询成功'
         });
       } else {

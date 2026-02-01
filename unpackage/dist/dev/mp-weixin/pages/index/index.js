@@ -30,7 +30,9 @@ const _sfc_main = {
       timeUpdateTimer: null,
       showAddDeviceModal: false,
       newDeviceId: "",
-      newDeviceName: ""
+      newDeviceName: "",
+      aiReportContent: "",
+      loadingAiReport: false
     };
   },
   computed: {
@@ -68,7 +70,7 @@ const _sfc_main = {
     ]);
     this.restoreSelectedDevice();
     this.loadHealthData();
-    common_vendor.index.setNavigationBarTitle({ title: "辟谷养生" });
+    common_vendor.index.setNavigationBarTitle({ title: "健康监测系统" });
   },
   onShow() {
     this.updateTimeTexts();
@@ -91,7 +93,7 @@ const _sfc_main = {
   methods: {
     switchTab(tab) {
       this.activeTab = tab;
-      common_vendor.index.setNavigationBarTitle({ title: "辟谷养生" });
+      common_vendor.index.setNavigationBarTitle({ title: "健康监测系统" });
     },
     deviceKey(device) {
       return `${device.id || "noid"}__${device.name || "noname"}`;
@@ -127,7 +129,7 @@ const _sfc_main = {
           }
         }
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:260", "加载用户列表失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:279", "加载用户列表失败:", error);
         common_vendor.index.showToast({
           title: "加载用户列表失败",
           icon: "none"
@@ -187,7 +189,7 @@ const _sfc_main = {
         this.remoteDevices = remote;
         this.devices = this.mergeDeviceLists();
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:320", "加载设备列表失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:339", "加载设备列表失败:", error);
         common_vendor.index.showToast({
           title: "加载设备列表失败",
           icon: "none"
@@ -323,6 +325,7 @@ const _sfc_main = {
         return;
       }
       common_vendor.index.showLoading({ title: "加载中..." });
+      this.loadingAiReport = true;
       try {
         const tags = {};
         if (this.selectedDeviceId)
@@ -333,11 +336,14 @@ const _sfc_main = {
           this.currentUser,
           ["heart_rate", "temperature", "blood_oxygen"],
           "-365d",
-          tags
+          tags,
+          true
+          // 获取 AI 报告
         );
         this.applyHealthResults(results);
+        this.aiReportContent = results.aiReport || "";
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:464", "加载健康数据失败:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:486", "加载健康数据失败:", error);
         common_vendor.index.showToast({ title: "加载数据失败", icon: "none" });
         this.setEmptyHealthData();
         this.temperatureTimeText = "数据加载失败";
@@ -345,6 +351,7 @@ const _sfc_main = {
         this.spo2TimeText = "数据加载失败";
       } finally {
         common_vendor.index.hideLoading();
+        this.loadingAiReport = false;
       }
     },
     applyHealthResults(results) {
@@ -431,7 +438,7 @@ const _sfc_main = {
           return `${diffDays}天前`;
         return dataTime.toLocaleDateString("zh-CN");
       } catch (error) {
-        common_vendor.index.__f__("error", "at pages/index/index.vue:562", "时间计算错误:", error);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:585", "时间计算错误:", error);
         return "时间错误";
       }
     },
@@ -469,6 +476,12 @@ const _sfc_main = {
         url += `&deviceName=${this.selectedDeviceName}`;
       }
       common_vendor.index.navigateTo({ url });
+    },
+    renderMarkdown(content) {
+      if (!content)
+        return "";
+      let html = content.replace(/^### (.*$)/gim, '<h3 style="font-size: 30rpx; font-weight: bold; margin: 20rpx 0 10rpx;">$1</h3>').replace(/^## (.*$)/gim, '<h2 style="font-size: 34rpx; font-weight: bold; margin: 24rpx 0 12rpx;">$1</h2>').replace(/^# (.*$)/gim, '<h1 style="font-size: 38rpx; font-weight: bold; margin: 28rpx 0 14rpx;">$1</h1>').replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>").replace(/^\* (.*$)/gim, '<div style="display: flex; margin-bottom: 8rpx;"><span style="margin-right: 10rpx;">•</span><span>$1</span></div>').replace(/^- (.*$)/gim, '<div style="display: flex; margin-bottom: 8rpx;"><span style="margin-right: 10rpx;">•</span><span>$1</span></div>').replace(/\n/gim, "<br />");
+      return `<div style="line-height: 1.6; color: #333; font-size: 28rpx;">${html}</div>`;
     }
   }
 };
@@ -507,14 +520,20 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     y: $data.spo2Value !== null
   }, $data.spo2Value !== null ? {} : {}, {
     z: common_vendor.t($data.spo2TimeText),
-    A: common_vendor.o(($event) => $options.goToDetail("blood_oxygen"))
+    A: common_vendor.o(($event) => $options.goToDetail("blood_oxygen")),
+    B: common_vendor.t($data.formattedDate),
+    C: $data.loadingAiReport
+  }, $data.loadingAiReport ? {} : $data.aiReportContent ? {
+    E: $options.renderMarkdown($data.aiReportContent)
+  } : {}, {
+    D: $data.aiReportContent
   }) : common_vendor.e({
-    B: $data.devices.length === 0
+    F: $data.devices.length === 0
   }, $data.devices.length === 0 ? {
-    C: common_assets._imports_4,
-    D: common_vendor.o((...args) => $options.openAddDevice && $options.openAddDevice(...args))
+    G: common_assets._imports_4,
+    H: common_vendor.o((...args) => $options.openAddDevice && $options.openAddDevice(...args))
   } : {
-    E: common_vendor.f($data.devices, (device, index, i0) => {
+    I: common_vendor.f($data.devices, (device, index, i0) => {
       return {
         a: common_vendor.t($options.deviceDisplayName(device)),
         b: common_vendor.t(device.id ? `ID：${device.id}` : "未提供ID"),
@@ -528,22 +547,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         j: common_vendor.o(($event) => $options.selectDevice(index), $options.deviceKey(device))
       };
     }),
-    F: common_vendor.o((...args) => $options.openAddDevice && $options.openAddDevice(...args))
+    J: common_vendor.o((...args) => $options.openAddDevice && $options.openAddDevice(...args))
   }), {
-    G: $data.activeTab === "health" ? "/static/health-select.png" : "/static/health.png",
-    H: $data.activeTab === "health" ? 1 : "",
-    I: common_vendor.o(($event) => $options.switchTab("health")),
-    J: $data.activeTab === "device" ? "/static/device-select.png" : "/static/device.png",
-    K: $data.activeTab === "device" ? 1 : "",
-    L: common_vendor.o(($event) => $options.switchTab("device")),
-    M: $data.showAddDeviceModal
+    K: $data.activeTab === "health" ? "/static/health-select.png" : "/static/health.png",
+    L: $data.activeTab === "health" ? 1 : "",
+    M: common_vendor.o(($event) => $options.switchTab("health")),
+    N: $data.activeTab === "device" ? "/static/device-select.png" : "/static/device.png",
+    O: $data.activeTab === "device" ? 1 : "",
+    P: common_vendor.o(($event) => $options.switchTab("device")),
+    Q: $data.showAddDeviceModal
   }, $data.showAddDeviceModal ? {
-    N: $data.newDeviceId,
-    O: common_vendor.o(($event) => $data.newDeviceId = $event.detail.value),
-    P: $data.newDeviceName,
-    Q: common_vendor.o(($event) => $data.newDeviceName = $event.detail.value),
-    R: common_vendor.o((...args) => $options.closeAddDevice && $options.closeAddDevice(...args)),
-    S: common_vendor.o((...args) => $options.confirmAddDevice && $options.confirmAddDevice(...args))
+    R: $data.newDeviceId,
+    S: common_vendor.o(($event) => $data.newDeviceId = $event.detail.value),
+    T: $data.newDeviceName,
+    U: common_vendor.o(($event) => $data.newDeviceName = $event.detail.value),
+    V: common_vendor.o((...args) => $options.closeAddDevice && $options.closeAddDevice(...args)),
+    W: common_vendor.o((...args) => $options.confirmAddDevice && $options.confirmAddDevice(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

@@ -1,4 +1,4 @@
-# 辟谷健康数据中心
+# 基于ESP32与AI智能体的个人健康监测系统
 
 一个基于 uni-app 小程序 + Node.js/Express 后端（AdminLTE 前端界面）的示例项目，用于：
 - 监控后端服务存活状态
@@ -91,7 +91,7 @@ const DEVICE_CACHE_TTL = 5 * 60 * 1000;           // 设备列表缓存 5 分钟
 如需对接其他上游服务，请调整 `ALIYUN_SERVER`。设备接口默认请求 `/api/health/devices`，请确保云端已提供该接口，响应中包含 `device_ids` 与 `device_names`。
 
 ### server/public/index.html（数据中心前端）
-- **系统标题**：第6行（`<title>`）和第148行（`<h1 class="m-0">`），修改为“辟谷健康数据中心”
+- **系统标题**：第6行（`<title>`）和第148行（`<h1 class="m-0">`），修改为“个人健康监测系统”
 - **登录**：使用 AdminLTE 登录页（`<div id="login-screen">`）。账号/密码默认为 admin/admin，可在脚本顶部 `AUTH_CONFIG` 修改
 - **导航栏**：第133行，`<p>用户ID管理</p>` 改为 `<p>用户管理</p>`
 - **用户管理展示**：第382-400行，改为序号+头像+用户ID的展示方式

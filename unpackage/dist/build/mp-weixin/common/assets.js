@@ -1,0 +1,1 @@
+"use strict";exports._imports_0="/static/avatar.png",exports._imports_1="/static/temperature.png",exports._imports_2="/static/heart.png",exports._imports_3="/static/spo2.png",exports._imports_4="/static/no-device.png";
